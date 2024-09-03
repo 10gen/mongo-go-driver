@@ -888,7 +888,7 @@ func runInWindowTest(t *testing.T, directory string, filename string) {
 	for i := 0; i < test.Iterations; i++ {
 		selected, err := topology.SelectServer(
 			context.Background(),
-			&serverselector.ReadPref{ReadPref: readpref.Nearest()})
+			&serverselector.ReadPref{ReadPref: &readpref.ReadPref{Mode: readpref.NearestMode}})
 		require.NoError(t, err, "error selecting server")
 		counts[string(selected.(*SelectedServer).address)]++
 	}

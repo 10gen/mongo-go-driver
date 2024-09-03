@@ -4,7 +4,7 @@
 // not use this file except in compliance with the License. You may obtain
 // a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
 
-package tag
+package readpref
 
 import (
 	"testing"
@@ -23,7 +23,7 @@ func TestTag_String(t *testing.T) {
 func TestTagSets_NewTagSet(t *testing.T) {
 	t.Parallel()
 
-	ts := Set{Tag{Name: "a", Value: "1"}}
+	ts := TagSet{Tag{Name: "a", Value: "1"}}
 
 	require.True(t, ts.Contains("a", "1"))
 	require.False(t, ts.Contains("1", "a"))
@@ -65,30 +65,30 @@ func TestTagSets_NewTagSetsFromMaps(t *testing.T) {
 func TestTagSets_ContainsAll(t *testing.T) {
 	t.Parallel()
 
-	ts := Set{
+	ts := TagSet{
 		Tag{Name: "a", Value: "1"},
 		Tag{Name: "b", Value: "2"},
 	}
 
-	test := Set{Tag{Name: "a", Value: "1"}}
+	test := TagSet{Tag{Name: "a", Value: "1"}}
 	require.True(t, ts.ContainsAll(test))
-	test = Set{Tag{Name: "a", Value: "1"}, Tag{Name: "b", Value: "2"}}
+	test = TagSet{Tag{Name: "a", Value: "1"}, Tag{Name: "b", Value: "2"}}
 	require.True(t, ts.ContainsAll(test))
-	test = Set{Tag{Name: "a", Value: "1"}, Tag{Name: "b", Value: "2"}}
+	test = TagSet{Tag{Name: "a", Value: "1"}, Tag{Name: "b", Value: "2"}}
 	require.True(t, ts.ContainsAll(test))
 
-	test = Set{Tag{Name: "a", Value: "2"}, Tag{Name: "b", Value: "1"}}
+	test = TagSet{Tag{Name: "a", Value: "2"}, Tag{Name: "b", Value: "1"}}
 	require.False(t, ts.ContainsAll(test))
-	test = Set{Tag{Name: "a", Value: "1"}, Tag{Name: "b", Value: "1"}}
+	test = TagSet{Tag{Name: "a", Value: "1"}, Tag{Name: "b", Value: "1"}}
 	require.False(t, ts.ContainsAll(test))
-	test = Set{Tag{Name: "a", Value: "2"}, Tag{Name: "b", Value: "2"}}
+	test = TagSet{Tag{Name: "a", Value: "2"}, Tag{Name: "b", Value: "2"}}
 	require.False(t, ts.ContainsAll(test))
 }
 
 func TestTagSets_String(t *testing.T) {
 	t.Parallel()
 
-	ts := Set{
+	ts := TagSet{
 		Tag{Name: "a", Value: "1"},
 		Tag{Name: "b", Value: "2"},
 	}

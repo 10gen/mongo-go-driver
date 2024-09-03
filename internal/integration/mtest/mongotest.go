@@ -36,7 +36,7 @@ var (
 	// PrimaryRp is the primary read preference.
 	PrimaryRp = readpref.Primary()
 	// SecondaryRp is the secondary read preference.
-	SecondaryRp = readpref.Secondary()
+	SecondaryRp = &readpref.ReadPref{Mode: readpref.SecondaryMode}
 	// LocalRc is the local read concern
 	LocalRc = readconcern.Local()
 	// MajorityRc is the majority read concern

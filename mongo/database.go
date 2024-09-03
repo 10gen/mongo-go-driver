@@ -169,7 +169,7 @@ func (db *Database) processRunCommand(
 		return nil, sess, err
 	}
 
-	if sess != nil && sess.TransactionRunning() && args.ReadPreference != nil && args.ReadPreference.Mode() != readpref.PrimaryMode {
+	if sess != nil && sess.TransactionRunning() && args.ReadPreference != nil && args.ReadPreference.Mode != readpref.PrimaryMode {
 		return nil, sess, errors.New("read preference in a transaction must be primary")
 	}
 

@@ -75,7 +75,7 @@ func TestDatabase(t *testing.T) {
 			// layer, which should add a top-level $readPreference field to the command.
 
 			runCmdOpts := options.RunCmd().
-				SetReadPreference(readpref.SecondaryPreferred())
+				SetReadPreference(&readpref.ReadPref{Mode: readpref.SecondaryPreferredMode})
 			err := mt.DB.RunCommand(context.Background(), bson.D{{handshake.LegacyHello, 1}}, runCmdOpts).Err()
 			assert.Nil(mt, err, "RunCommand error: %v", err)
 

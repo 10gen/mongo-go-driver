@@ -24,7 +24,6 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo/readconcern"
 	"go.mongodb.org/mongo-driver/v2/mongo/readpref"
 	"go.mongodb.org/mongo-driver/v2/mongo/writeconcern"
-	"go.mongodb.org/mongo-driver/v2/tag"
 	"go.mongodb.org/mongo-driver/v2/x/bsonx/bsoncore"
 	"go.mongodb.org/mongo-driver/v2/x/mongo/driver/description"
 	"go.mongodb.org/mongo-driver/v2/x/mongo/driver/mnet"
@@ -438,14 +437,25 @@ func TestOperation(t *testing.T) {
 			{"primary/mongos", readpref.Primary(), description.ServerKindMongos, description.TopologyKindSharded, false, nil},
 			{"primary/single", readpref.Primary(), description.ServerKindRSPrimary, description.TopologyKindSingle, false, rpPrimaryPreferred},
 			{"primary/primary", readpref.Primary(), description.ServerKindRSPrimary, description.TopologyKindReplicaSet, false, nil},
-			{"primaryPreferred", readpref.PrimaryPreferred(), description.ServerKindRSSecondary, description.TopologyKindReplicaSet, false, rpPrimaryPreferred},
-			{"secondaryPreferred/mongos/opquery", readpref.SecondaryPreferred(), description.ServerKindMongos, description.TopologyKindSharded, true, nil},
-			{"secondaryPreferred", readpref.SecondaryPreferred(), description.ServerKindRSSecondary, description.TopologyKindReplicaSet, false, rpSecondaryPreferred},
-			{"secondary", readpref.Secondary(), description.ServerKindRSSecondary, description.TopologyKindReplicaSet, false, rpSecondary},
-			{"nearest", readpref.Nearest(), description.ServerKindRSSecondary, description.TopologyKindReplicaSet, false, rpNearest},
+			{"primaryPreferred", &readpref.ReadPref{Mode: readpref.PrimaryPreferredMode}, description.ServerKindRSSecondary, description.TopologyKindReplicaSet, false, rpPrimaryPreferred},
+			{"secondaryPreferred/mongos/opquery", &readpref.ReadPref{Mode: readpref.SecondaryPreferredMode}, description.ServerKindMongos, description.TopologyKindSharded, true, nil},
+			{"secondaryPreferred", &readpref.ReadPref{Mode: readpref.SecondaryPreferredMode}, description.ServerKindRSSecondary, description.TopologyKindReplicaSet, false, rpSecondaryPreferred},
+			{"secondary", &readpref.ReadPref{Mode: readpref.SecondaryMode}, description.ServerKindRSSecondary, description.TopologyKindReplicaSet, false, rpSecondary},
+			{"nearest", &readpref.ReadPref{Mode: readpref.NearestMode}, description.ServerKindRSSecondary, description.TopologyKindReplicaSet, false, rpNearest},
 			{
 				"secondaryPreferred/withTags",
-				readpref.SecondaryPreferred(readpref.WithTags("disk", "ssd", "use", "reporting")),
+				func() *readpref.ReadPref {
+					rpOpts := readpref.Options()
+
+					tagSet, err := readpref.NewTagSet("disk", "ssd", "use", "reporting")
+					assert.NoError(t, err)
+
+					rpOpts.SetTagSets([]readpref.TagSet{tagSet})
+
+					rp, _ := readpref.New(readpref.SecondaryPreferredMode, rpOpts)
+
+					return rp
+				}(),
 				description.ServerKindRSSecondary, description.TopologyKindReplicaSet, false, rpWithTags,
 			},
 			// GODRIVER-2205: Ensure empty tag sets are written as an empty document in the read
@@ -453,9 +463,18 @@ func TestOperation(t *testing.T) {
 			// no other tag sets match any servers.
 			{
 				"secondaryPreferred/withTags/emptyTagSet",
-				readpref.SecondaryPreferred(readpref.WithTagSets(
-					tag.Set{{Name: "disk", Value: "ssd"}},
-					tag.Set{})),
+				func() *readpref.ReadPref {
+					rpOpts := readpref.Options()
+
+					rpOpts.SetTagSets([]readpref.TagSet{
+						readpref.TagSet{{Name: "disk", Value: "ssd"}},
+						readpref.TagSet{},
+					})
+
+					rp, _ := readpref.New(readpref.SecondaryPreferredMode, rpOpts)
+
+					return rp
+				}(),
 				description.ServerKindRSSecondary,
 				description.TopologyKindReplicaSet,
 				false,
@@ -469,13 +488,31 @@ func TestOperation(t *testing.T) {
 			},
 			{
 				"secondaryPreferred/withMaxStaleness",
-				readpref.SecondaryPreferred(readpref.WithMaxStaleness(25 * time.Second)),
+				func() *readpref.ReadPref {
+					rpOpts := readpref.Options()
+
+					maxStaleness := 25 * time.Second
+					rpOpts.SetMaxStaleness(maxStaleness)
+
+					rp, _ := readpref.New(readpref.SecondaryPreferredMode, rpOpts)
+
+					return rp
+				}(),
 				description.ServerKindRSSecondary, description.TopologyKindReplicaSet, false, rpWithMaxStaleness,
 			},
 			{
 				// A read preference document is generated for SecondaryPreferred if the hedge document is non-nil.
 				"secondaryPreferred with hedge to mongos using OP_QUERY",
-				readpref.SecondaryPreferred(readpref.WithHedgeEnabled(true)),
+				func() *readpref.ReadPref {
+					rpOpts := readpref.Options()
+
+					he := true
+					rpOpts.SetHedgeEnabled(he)
+
+					rp, _ := readpref.New(readpref.SecondaryPreferredMode, rpOpts)
+
+					return rp
+				}(),
 				description.ServerKindMongos,
 				description.TopologyKindSharded,
 				true,
@@ -483,11 +520,24 @@ func TestOperation(t *testing.T) {
 			},
 			{
 				"secondaryPreferred with all options",
-				readpref.SecondaryPreferred(
-					readpref.WithTags("disk", "ssd", "use", "reporting"),
-					readpref.WithMaxStaleness(25*time.Second),
-					readpref.WithHedgeEnabled(false),
-				),
+				func() *readpref.ReadPref {
+					tagSet, err := readpref.NewTagSet("disk", "ssd", "use", "reporting")
+					assert.NoError(t, err)
+
+					rpOpts := readpref.Options()
+
+					rpOpts.SetTagSets([]readpref.TagSet{tagSet})
+
+					maxStaleness := 25 * time.Second
+					rpOpts.SetMaxStaleness(maxStaleness)
+
+					he := false
+					rpOpts.SetHedgeEnabled(he)
+
+					rp, _ := readpref.New(readpref.SecondaryPreferredMode, rpOpts)
+
+					return rp
+				}(),
 				description.ServerKindRSSecondary,
 				description.TopologyKindReplicaSet,
 				false,
@@ -523,7 +573,7 @@ func TestOperation(t *testing.T) {
 		})
 		t.Run("readPreference", func(t *testing.T) {
 			want := wiremessage.SecondaryOK
-			got := Operation{ReadPreference: readpref.Secondary()}.secondaryOK(description.SelectedServer{})
+			got := Operation{ReadPreference: &readpref.ReadPref{Mode: readpref.SecondaryMode}}.secondaryOK(description.SelectedServer{})
 			if got != want {
 				t.Errorf("Did not receive expected query flags. got %v; want %v", got, want)
 			}

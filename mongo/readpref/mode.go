@@ -12,29 +12,28 @@ import (
 )
 
 // Mode indicates the user's preference on reads.
-type Mode uint8
+type Mode string
 
 // Mode constants
 const (
-	_ Mode = iota
 	// PrimaryMode indicates that only a primary is
 	// considered for reading. This is the default
 	// mode.
-	PrimaryMode
+	PrimaryMode = "primary"
 	// PrimaryPreferredMode indicates that if a primary
 	// is available, use it; otherwise, eligible
 	// secondaries will be considered.
-	PrimaryPreferredMode
+	PrimaryPreferredMode = "primaryPreferred"
 	// SecondaryMode indicates that only secondaries
 	// should be considered.
-	SecondaryMode
+	SecondaryMode = "secondary"
 	// SecondaryPreferredMode indicates that only secondaries
 	// should be considered when one is available. If none
 	// are available, then a primary will be considered.
-	SecondaryPreferredMode
+	SecondaryPreferredMode = "secondaryPreferred"
 	// NearestMode indicates that all primaries and secondaries
 	// will be considered.
-	NearestMode
+	NearestMode = "nearest"
 )
 
 // ModeFromString returns a mode corresponding to
@@ -52,37 +51,5 @@ func ModeFromString(mode string) (Mode, error) {
 	case "nearest":
 		return NearestMode, nil
 	}
-	return Mode(0), fmt.Errorf("unknown read preference %v", mode)
-}
-
-// String returns the string representation of mode.
-func (mode Mode) String() string {
-	switch mode {
-	case PrimaryMode:
-		return "primary"
-	case PrimaryPreferredMode:
-		return "primaryPreferred"
-	case SecondaryMode:
-		return "secondary"
-	case SecondaryPreferredMode:
-		return "secondaryPreferred"
-	case NearestMode:
-		return "nearest"
-	default:
-		return "unknown"
-	}
-}
-
-// IsValid checks whether the mode is valid.
-func (mode Mode) IsValid() bool {
-	switch mode {
-	case PrimaryMode,
-		PrimaryPreferredMode,
-		SecondaryMode,
-		SecondaryPreferredMode,
-		NearestMode:
-		return true
-	default:
-		return false
-	}
+	return "", fmt.Errorf("unknown read preference %v", mode)
 }

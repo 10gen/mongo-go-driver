@@ -87,7 +87,7 @@ func runSeedlistDiscoveryPingTest(mt *mtest.T, clientOpts *options.ClientOptions
 	defer cancel()
 
 	// Ping the server.
-	err = client.Ping(pingCtx, readpref.Nearest())
+	err = client.Ping(pingCtx, &readpref.ReadPref{Mode: readpref.NearestMode})
 	assert.Nil(mt, err, "Ping error: %v", err)
 }
 

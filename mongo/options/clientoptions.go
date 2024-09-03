@@ -28,7 +28,6 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo/readconcern"
 	"go.mongodb.org/mongo-driver/v2/mongo/readpref"
 	"go.mongodb.org/mongo-driver/v2/mongo/writeconcern"
-	"go.mongodb.org/mongo-driver/v2/tag"
 	"go.mongodb.org/mongo-driver/v2/x/mongo/driver"
 	"go.mongodb.org/mongo-driver/v2/x/mongo/driver/auth"
 	"go.mongodb.org/mongo-driver/v2/x/mongo/driver/connstring"
@@ -393,15 +392,15 @@ func setURIOpts(uri string, opts *ClientOptions) error {
 	}
 
 	if connString.ReadPreference != "" || len(connString.ReadPreferenceTagSets) > 0 || connString.MaxStalenessSet {
-		readPrefOpts := make([]readpref.Option, 0, 1)
+		readPrefOpts := readpref.Options()
 
-		tagSets := tag.NewTagSetsFromMaps(connString.ReadPreferenceTagSets)
+		tagSets := readpref.NewTagSetsFromMaps(connString.ReadPreferenceTagSets)
 		if len(tagSets) > 0 {
-			readPrefOpts = append(readPrefOpts, readpref.WithTagSets(tagSets...))
+			readPrefOpts.SetTagSets(tagSets)
 		}
 
 		if connString.MaxStaleness != 0 {
-			readPrefOpts = append(readPrefOpts, readpref.WithMaxStaleness(connString.MaxStaleness))
+			readPrefOpts.SetMaxStaleness(connString.MaxStaleness)
 		}
 
 		mode, err := readpref.ModeFromString(connString.ReadPreference)
@@ -409,7 +408,7 @@ func setURIOpts(uri string, opts *ClientOptions) error {
 			return err
 		}
 
-		opts.ReadPreference, err = readpref.New(mode, readPrefOpts...)
+		opts.ReadPreference, err = readpref.New(mode, readPrefOpts)
 		if err != nil {
 			return err
 		}

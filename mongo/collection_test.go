@@ -48,7 +48,7 @@ func TestCollection(t *testing.T) {
 	})
 	t.Run("specified options", func(t *testing.T) {
 		rpPrimary := readpref.Primary()
-		rpSecondary := readpref.Secondary()
+		rpSecondary := &readpref.ReadPref{Mode: readpref.SecondaryMode}
 		wc1 := &writeconcern.WriteConcern{W: 5}
 		wc2 := &writeconcern.WriteConcern{W: 10}
 		rcLocal := readconcern.Local()

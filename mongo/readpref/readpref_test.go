@@ -11,133 +11,153 @@ import (
 	"time"
 
 	"go.mongodb.org/mongo-driver/v2/internal/assert"
-	"go.mongodb.org/mongo-driver/v2/internal/require"
-	"go.mongodb.org/mongo-driver/v2/tag"
+	"go.mongodb.org/mongo-driver/v2/internal/ptrutil"
 )
 
-func TestPrimary(t *testing.T) {
-	subject := Primary()
+func TestNew(t *testing.T) {
+	t.Parallel()
 
-	require.Equal(t, PrimaryMode, subject.Mode())
-	_, set := subject.MaxStaleness()
-	require.False(t, set)
-	require.Len(t, subject.TagSets(), 0)
-}
+	tagSets := []TagSet{
+		{
+			{Name: "a", Value: "1"},
+			{Name: "b", Value: "2"},
+		},
+	}
 
-func TestPrimaryPreferred(t *testing.T) {
-	subject := PrimaryPreferred()
+	tests := []struct {
+		name    string
+		mode    Mode
+		opts    []*Builder
+		want    *ReadPref
+		wantErr error
+	}{
+		{
+			name:    "primary",
+			mode:    PrimaryMode,
+			opts:    nil,
+			want:    &ReadPref{Mode: PrimaryMode},
+			wantErr: nil,
+		},
+		{
+			name:    "primary with maxStaleness",
+			mode:    PrimaryMode,
+			opts:    []*Builder{Options().SetMaxStaleness(1)},
+			want:    nil,
+			wantErr: errInvalidReadPreference,
+		},
+		{
+			name:    "primary with tags",
+			mode:    PrimaryMode,
+			opts:    []*Builder{Options().SetTagSets([]TagSet{{}})},
+			want:    nil,
+			wantErr: errInvalidReadPreference,
+		},
+		{
+			name:    "primary with hedgeEnabled",
+			mode:    PrimaryMode,
+			opts:    []*Builder{Options().SetHedgeEnabled(false)},
+			want:    nil,
+			wantErr: errInvalidReadPreference,
+		},
+		{
+			name:    "primaryPreferred",
+			mode:    PrimaryPreferredMode,
+			opts:    nil,
+			want:    &ReadPref{Mode: PrimaryPreferredMode},
+			wantErr: nil,
+		},
+		{
+			name: "primaryPreferred with options",
+			mode: PrimaryPreferredMode,
+			opts: []*Builder{Options().SetMaxStaleness(1).SetTagSets(tagSets)},
+			want: &ReadPref{
+				Mode:         PrimaryPreferredMode,
+				maxStaleness: ptrutil.Ptr[time.Duration](1),
+				tagSets:      tagSets,
+			},
+			wantErr: nil,
+		},
+		{
+			name:    "secondary",
+			mode:    SecondaryMode,
+			opts:    nil,
+			want:    &ReadPref{Mode: SecondaryMode},
+			wantErr: nil,
+		},
+		{
+			name: "secondary with options",
+			mode: SecondaryMode,
+			opts: []*Builder{Options().SetMaxStaleness(1).SetTagSets(tagSets)},
+			want: &ReadPref{
+				Mode:         SecondaryMode,
+				maxStaleness: ptrutil.Ptr[time.Duration](1),
+				tagSets:      tagSets,
+			},
+			wantErr: nil,
+		},
+		{
+			name:    "nearest",
+			mode:    NearestMode,
+			opts:    nil,
+			want:    &ReadPref{Mode: NearestMode},
+			wantErr: nil,
+		},
+		{
+			name: "nearest with options",
+			mode: NearestMode,
+			opts: []*Builder{Options().SetMaxStaleness(1).SetTagSets(tagSets)},
+			want: &ReadPref{
+				Mode:         NearestMode,
+				maxStaleness: ptrutil.Ptr[time.Duration](1),
+				tagSets:      tagSets,
+			},
+			wantErr: nil,
+		},
+	}
 
-	require.Equal(t, PrimaryPreferredMode, subject.Mode())
-	_, set := subject.MaxStaleness()
-	require.False(t, set)
-	require.Len(t, subject.TagSets(), 0)
-}
+	for _, test := range tests {
+		test := test
 
-func TestPrimaryPreferred_with_options(t *testing.T) {
-	subject := PrimaryPreferred(
-		WithMaxStaleness(time.Duration(10)),
-		WithTags("a", "1", "b", "2"),
-	)
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
 
-	require.Equal(t, PrimaryPreferredMode, subject.Mode())
-	ms, set := subject.MaxStaleness()
-	require.True(t, set)
-	require.Equal(t, time.Duration(10), ms)
-	require.Equal(t, []tag.Set{{tag.Tag{Name: "a", Value: "1"}, tag.Tag{Name: "b", Value: "2"}}}, subject.TagSets())
-}
+			readPref, err := New(test.mode, test.opts...)
 
-func TestSecondaryPreferred(t *testing.T) {
-	subject := SecondaryPreferred()
+			if test.wantErr == nil {
+				assert.NoError(t, err)
+			} else {
+				assert.ErrorIs(t, err, test.wantErr)
+			}
 
-	require.Equal(t, SecondaryPreferredMode, subject.Mode())
-	_, set := subject.MaxStaleness()
-	require.False(t, set)
-	require.Len(t, subject.TagSets(), 0)
-}
+			if test.want == nil {
+				return
+			}
 
-func TestSecondaryPreferred_with_options(t *testing.T) {
-	subject := SecondaryPreferred(
-		WithMaxStaleness(time.Duration(10)),
-		WithTags("a", "1", "b", "2"),
-	)
-
-	require.Equal(t, SecondaryPreferredMode, subject.Mode())
-	ms, set := subject.MaxStaleness()
-	require.True(t, set)
-	require.Equal(t, time.Duration(10), ms)
-	require.Equal(t, []tag.Set{{tag.Tag{Name: "a", Value: "1"}, tag.Tag{Name: "b", Value: "2"}}}, subject.TagSets())
-}
-
-func TestSecondary(t *testing.T) {
-	subject := Secondary()
-
-	require.Equal(t, SecondaryMode, subject.Mode())
-	_, set := subject.MaxStaleness()
-	require.False(t, set)
-	require.Len(t, subject.TagSets(), 0)
-}
-
-func TestSecondary_with_options(t *testing.T) {
-	subject := Secondary(
-		WithMaxStaleness(time.Duration(10)),
-		WithTags("a", "1", "b", "2"),
-	)
-
-	require.Equal(t, SecondaryMode, subject.Mode())
-	ms, set := subject.MaxStaleness()
-	require.True(t, set)
-	require.Equal(t, time.Duration(10), ms)
-	require.Equal(t, []tag.Set{{tag.Tag{Name: "a", Value: "1"}, tag.Tag{Name: "b", Value: "2"}}}, subject.TagSets())
-}
-
-func TestNearest(t *testing.T) {
-	subject := Nearest()
-
-	require.Equal(t, NearestMode, subject.Mode())
-	_, set := subject.MaxStaleness()
-	require.False(t, set)
-	require.Len(t, subject.TagSets(), 0)
-}
-
-func TestNearest_with_options(t *testing.T) {
-	subject := Nearest(
-		WithMaxStaleness(time.Duration(10)),
-		WithTags("a", "1", "b", "2"),
-	)
-
-	require.Equal(t, NearestMode, subject.Mode())
-	ms, set := subject.MaxStaleness()
-	require.True(t, set)
-	require.Equal(t, time.Duration(10), ms)
-	require.Equal(t, []tag.Set{{tag.Tag{Name: "a", Value: "1"}, tag.Tag{Name: "b", Value: "2"}}}, subject.TagSets())
-}
-
-func TestHedge(t *testing.T) {
-	t.Run("hedge specified with primary mode errors", func(t *testing.T) {
-		_, err := New(PrimaryMode, WithHedgeEnabled(true))
-		assert.Equal(t, errInvalidReadPreference, err, "expected error %v, got %v", errInvalidReadPreference, err)
-	})
-	t.Run("valid hedge document and mode succeeds", func(t *testing.T) {
-		rp, err := New(SecondaryMode, WithHedgeEnabled(true))
-		assert.Nil(t, err, "expected no error, got %v", err)
-		enabled := rp.HedgeEnabled()
-		assert.NotNil(t, enabled, "expected HedgeEnabled to return a non-nil value, got nil")
-		assert.True(t, *enabled, "expected HedgeEnabled to return true, got false")
-	})
+			assert.Equal(t, test.mode, readPref.Mode)
+			assert.EqualValues(t, test.want, readPref)
+		})
+	}
 }
 
 func TestReadPref_String(t *testing.T) {
 	t.Run("ReadPref.String() with all options", func(t *testing.T) {
-		readPref := Nearest(
-			WithMaxStaleness(120*time.Second),
-			WithTagSets(tag.Set{{"a", "1"}, {"b", "2"}}, tag.Set{{"q", "5"}, {"r", "6"}}),
-			WithHedgeEnabled(true),
-		)
+		opts := Options().SetMaxStaleness(120 * time.Second).SetHedgeEnabled(true).SetTagSets([]TagSet{
+			{{"a", "1"}, {"b", "2"}},
+			{{"q", "5"}, {"r", "6"}},
+		})
+
+		readPref, err := New(NearestMode, opts)
+		assert.NoError(t, err)
+
 		expected := "nearest(maxStaleness=2m0s tagSet=a=1,b=2 tagSet=q=5,r=6 hedgeEnabled=true)"
 		assert.Equal(t, expected, readPref.String(), "expected %q, got %q", expected, readPref.String())
 	})
 	t.Run("ReadPref.String() with one option", func(t *testing.T) {
-		readPref := Secondary(WithTags("a", "1", "b", "2"))
+		opts := Options().SetTagSets([]TagSet{{{"a", "1"}, {"b", "2"}}})
+
+		readPref, err := New(SecondaryMode, opts)
+		assert.NoError(t, err)
+
 		expected := "secondary(tagSet=a=1,b=2)"
 		assert.Equal(t, expected, readPref.String(), "expected %q, got %q", expected, readPref.String())
 	})

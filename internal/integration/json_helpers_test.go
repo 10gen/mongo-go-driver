@@ -420,13 +420,13 @@ func readPrefFromString(s string) *readpref.ReadPref {
 	case "primary":
 		return readpref.Primary()
 	case "primarypreferred":
-		return readpref.PrimaryPreferred()
+		return &readpref.ReadPref{Mode: readpref.PrimaryPreferredMode}
 	case "secondary":
-		return readpref.Secondary()
+		return &readpref.ReadPref{Mode: readpref.SecondaryMode}
 	case "secondarypreferred":
-		return readpref.SecondaryPreferred()
+		return &readpref.ReadPref{Mode: readpref.SecondaryPreferredMode}
 	case "nearest":
-		return readpref.Nearest()
+		return &readpref.ReadPref{Mode: readpref.NearestMode}
 	}
 	return readpref.Primary()
 }

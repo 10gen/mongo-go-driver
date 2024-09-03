@@ -25,7 +25,6 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo/readconcern"
 	"go.mongodb.org/mongo-driver/v2/mongo/readpref"
 	"go.mongodb.org/mongo-driver/v2/mongo/writeconcern"
-	"go.mongodb.org/mongo-driver/v2/tag"
 	"go.mongodb.org/mongo-driver/v2/x/mongo/driver"
 	"go.mongodb.org/mongo-driver/v2/x/mongo/driver/mongocrypt"
 	"go.mongodb.org/mongo-driver/v2/x/mongo/driver/session"
@@ -92,22 +91,22 @@ func TestClient(t *testing.T) {
 	t.Run("read preference", func(t *testing.T) {
 		t.Run("absent", func(t *testing.T) {
 			client := setupClient()
-			gotMode := client.readPreference.Mode()
+			gotMode := client.readPreference.Mode
 			wantMode := readpref.PrimaryMode
 			assert.Equal(t, gotMode, wantMode, "expected mode %v, got %v", wantMode, gotMode)
-			_, flag := client.readPreference.MaxStaleness()
-			assert.False(t, flag, "expected max staleness to not be set but was")
+			gotMaxStaleness := client.readPreference.MaxStaleness()
+			assert.Nil(t, gotMaxStaleness, "expected max staleness to not be set but was")
 		})
 		t.Run("specified", func(t *testing.T) {
-			tags := []tag.Set{
+			tags := []readpref.TagSet{
 				{
-					tag.Tag{
+					readpref.Tag{
 						Name:  "one",
 						Value: "1",
 					},
 				},
 				{
-					tag.Tag{
+					readpref.Tag{
 						Name:  "two",
 						Value: "2",
 					},
@@ -117,14 +116,14 @@ func TestClient(t *testing.T) {
 			cs += "?readpreference=secondary&readPreferenceTags=one:1&readPreferenceTags=two:2&maxStaleness=5"
 
 			client := setupClient(options.Client().ApplyURI(cs))
-			gotMode := client.readPreference.Mode()
+			gotMode := client.readPreference.Mode
 			assert.Equal(t, gotMode, readpref.SecondaryMode, "expected mode %v, got %v", readpref.SecondaryMode, gotMode)
 			gotTags := client.readPreference.TagSets()
 			assert.Equal(t, gotTags, tags, "expected tags %v, got %v", tags, gotTags)
-			gotStaleness, flag := client.readPreference.MaxStaleness()
-			assert.True(t, flag, "expected max staleness to be set but was not")
+			gotStaleness := client.readPreference.MaxStaleness()
+			require.NotNil(t, gotStaleness, "expected max staleness to be set but was not")
 			wantStaleness := time.Duration(5) * time.Second
-			assert.Equal(t, gotStaleness, wantStaleness, "expected staleness %v, got %v", wantStaleness, gotStaleness)
+			assert.Equal(t, *gotStaleness, wantStaleness, "expected staleness %v, got %v", wantStaleness, *gotStaleness)
 		})
 	})
 	t.Run("localThreshold", func(t *testing.T) {

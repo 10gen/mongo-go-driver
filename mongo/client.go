@@ -492,9 +492,11 @@ func (c *Client) endSessions(ctx context.Context) {
 		return
 	}
 
+	rpOpts, _ := readpref.New(readpref.PrimaryPreferredMode, nil)
 	sessionIDs := c.sessionPool.IDSlice()
+
 	op := operation.NewEndSessions(nil).ClusterClock(c.clock).Deployment(c.deployment).
-		ServerSelector(&serverselector.ReadPref{ReadPref: readpref.PrimaryPreferred()}).
+		ServerSelector(&serverselector.ReadPref{ReadPref: rpOpts}).
 		CommandMonitor(c.monitor).Database("admin").Crypt(c.cryptFLE).ServerAPI(c.serverAPI)
 
 	totalNumIDs := len(sessionIDs)

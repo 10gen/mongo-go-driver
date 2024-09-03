@@ -14,7 +14,6 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo/readconcern"
 	"go.mongodb.org/mongo-driver/v2/mongo/readpref"
 	"go.mongodb.org/mongo-driver/v2/mongo/writeconcern"
-	"go.mongodb.org/mongo-driver/v2/tag"
 )
 
 // This file defines helper types to convert BSON documents to ReadConcern, WriteConcern, and ReadPref objects.
@@ -70,32 +69,34 @@ func (rp *ReadPreference) ToReadPrefOption() (*readpref.ReadPref, error) {
 		return nil, fmt.Errorf("invalid read preference mode %q", rp.Mode)
 	}
 
-	var rpOptions []readpref.Option
+	rpOpts := readpref.Options()
+
 	if rp.TagSets != nil {
 		// Each item in the TagSets slice is a document that represents one set.
-		sets := make([]tag.Set, 0, len(rp.TagSets))
+		sets := make([]readpref.TagSet, 0, len(rp.TagSets))
 		for _, rawSet := range rp.TagSets {
-			parsed := make(tag.Set, 0, len(rawSet))
+			parsed := make(readpref.TagSet, 0, len(rawSet))
 			for k, v := range rawSet {
-				parsed = append(parsed, tag.Tag{Name: k, Value: v})
+				parsed = append(parsed, readpref.Tag{Name: k, Value: v})
 			}
 			sets = append(sets, parsed)
 		}
 
-		rpOptions = append(rpOptions, readpref.WithTagSets(sets...))
+		rpOpts.SetTagSets(sets)
 	}
 	if rp.MaxStalenessSeconds != nil {
 		maxStaleness := time.Duration(*rp.MaxStalenessSeconds) * time.Second
-		rpOptions = append(rpOptions, readpref.WithMaxStaleness(maxStaleness))
+		rpOpts.SetMaxStaleness(maxStaleness)
 	}
 	if rp.Hedge != nil {
 		if len(rp.Hedge) > 1 {
 			return nil, fmt.Errorf("invalid read preference hedge document: length cannot be greater than 1")
 		}
 		if enabled, ok := rp.Hedge["enabled"]; ok {
-			rpOptions = append(rpOptions, readpref.WithHedgeEnabled(enabled.(bool)))
+			hedgeEnabled := enabled.(bool)
+			rpOpts.SetHedgeEnabled(hedgeEnabled)
 		}
 	}
 
-	return readpref.New(mode, rpOptions...)
+	return readpref.New(mode, rpOpts)
 }

@@ -1747,7 +1747,7 @@ func (op Operation) getReadPrefBasedOnTransaction() (*readpref.ReadPref, error) 
 		rp := op.Client.CurrentRp
 		// Reads in a transaction must have read preference primary
 		// This must not be checked in startTransaction
-		if rp != nil && !op.Client.TransactionStarting() && rp.Mode() != readpref.PrimaryMode {
+		if rp != nil && !op.Client.TransactionStarting() && rp.Mode != readpref.PrimaryMode {
 			return nil, ErrNonPrimaryReadPref
 		}
 		return rp, nil
@@ -1793,7 +1793,7 @@ func (op Operation) createReadPref(desc description.SelectedServer, isOpQuery bo
 		return nil, nil
 	}
 
-	switch rp.Mode() {
+	switch rp.Mode {
 	case readpref.PrimaryMode:
 		if desc.Server.Kind == description.ServerKindMongos {
 			return nil, nil
@@ -1814,7 +1814,7 @@ func (op Operation) createReadPref(desc description.SelectedServer, isOpQuery bo
 	case readpref.PrimaryPreferredMode:
 		doc = bsoncore.AppendStringElement(doc, "mode", "primaryPreferred")
 	case readpref.SecondaryPreferredMode:
-		_, ok := rp.MaxStaleness()
+		ok := rp.MaxStaleness() != nil
 		if desc.Server.Kind == description.ServerKindMongos && isOpQuery && !ok && len(rp.TagSets()) == 0 &&
 			rp.HedgeEnabled() == nil {
 
@@ -1845,8 +1845,8 @@ func (op Operation) createReadPref(desc description.SelectedServer, isOpQuery bo
 		doc, _ = bsoncore.AppendArrayEnd(doc, aidx)
 	}
 
-	if d, ok := rp.MaxStaleness(); ok {
-		doc = bsoncore.AppendInt32Element(doc, "maxStalenessSeconds", int32(d.Seconds()))
+	if maxStaleness := rp.MaxStaleness(); maxStaleness != nil {
+		doc = bsoncore.AppendInt32Element(doc, "maxStalenessSeconds", int32((*maxStaleness).Seconds()))
 	}
 
 	if hedgeEnabled := rp.HedgeEnabled(); hedgeEnabled != nil {
@@ -1868,7 +1868,7 @@ func (op Operation) secondaryOK(desc description.SelectedServer) wiremessage.Que
 		return wiremessage.SecondaryOK
 	}
 
-	if rp := op.ReadPreference; rp != nil && rp.Mode() != readpref.PrimaryMode {
+	if rp := op.ReadPreference; rp != nil && rp.Mode != readpref.PrimaryMode {
 		return wiremessage.SecondaryOK
 	}
 

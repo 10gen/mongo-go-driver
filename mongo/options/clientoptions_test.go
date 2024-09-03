@@ -954,8 +954,11 @@ func TestSetURIopts(t *testing.T) {
 			name: "ReadPreferenceTagSets",
 			uri:  "mongodb://localhost/?readPreference=secondaryPreferred&readPreferenceTags=foo:bar",
 			wantopts: &ClientOptions{
-				Hosts:          []string{"localhost"},
-				ReadPreference: readpref.SecondaryPreferred(readpref.WithTags("foo", "bar")),
+				Hosts: []string{"localhost"},
+				ReadPreference: func() *readpref.ReadPref {
+					tagSet, _ := readpref.NewTagSet("foo", "bar")
+					return readpref.SecondaryPreferred(readpref.Options().SetTagSets([]readpref.TagSet{tagSet}))
+				}(),
 			},
 			wantErrs: nil,
 		},
@@ -964,7 +967,7 @@ func TestSetURIopts(t *testing.T) {
 			uri:  "mongodb://localhost/?readPreference=secondaryPreferred&maxStaleness=250",
 			wantopts: &ClientOptions{
 				Hosts:          []string{"localhost"},
-				ReadPreference: readpref.SecondaryPreferred(readpref.WithMaxStaleness(250 * time.Second)),
+				ReadPreference: readpref.SecondaryPreferred(readpref.Options().SetMaxStaleness(250 * time.Second)),
 			},
 			wantErrs: nil,
 		},
