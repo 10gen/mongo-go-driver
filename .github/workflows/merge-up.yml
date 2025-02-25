@@ -1,0 +1,37 @@
+name: Merge up
+
+on:
+  push:
+    branches:
+      - release/*.*
+      - v*
+
+permissions:
+  id-token: write
+  contents: write
+  pull-requests: write
+
+jobs:
+  merge-up:
+    environment: release
+    name: Create merge up pull request
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: mongodb-labs/drivers-github-tools/secure-checkout@v2
+        with:
+          app_id: ${{ vars.APP_ID }}
+          private_key: ${{ secrets.APP_PRIVATE_KEY }}
+          # Make sure to include fetch-depth 0 so all branches are fetched, not
+          # just the current one
+          fetch-depth: 0
+
+      - name: Create pull request
+        id: create-pull-request
+        uses: alcaeus/automatic-merge-up-action@main
+        with:
+          ref: ${{ github.ref_name }}
+          branchNamePattern: 'release/<major>.<minor>'
+          devBranchNamePattern: 'v<major>'
+          fallbackBranch: 'master'
+          enableAutoMerge: true
