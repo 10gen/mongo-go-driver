@@ -220,11 +220,10 @@ type CollectionSpecification struct {
 	// The type of the collection. This will either be "collection" or "view".
 	Type string
 
-	// Whether or not the collection is readOnly. This will be false for MongoDB versions < 3.4.
+	// Whether or not the collection is readOnly.
 	ReadOnly bool
 
-	// The collection UUID. This field will be nil for MongoDB versions < 3.6. For versions 3.6 and higher, this will
-	// be a bson.Binary with Subtype 4.
+	// The collection UUID as a bson.Binary with subtype 4.
 	UUID *bson.Binary
 
 	// A document containing the options used to construct the collection.

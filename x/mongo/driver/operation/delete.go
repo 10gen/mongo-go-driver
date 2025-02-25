@@ -277,8 +277,7 @@ func (d *Delete) Retry(retry driver.RetryMode) *Delete {
 }
 
 // Hint is a flag to indicate that the update document contains a hint. Hint is only supported by
-// servers >= 4.4. Older servers >= 3.4 will report an error for using the hint option. For servers <
-// 3.4, the driver will return an error if the hint option is used.
+// servers >= 4.4. Older servers will report an error for using the hint option.
 func (d *Delete) Hint(hint bool) *Delete {
 	if d == nil {
 		d = new(Delete)

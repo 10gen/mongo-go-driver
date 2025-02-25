@@ -66,8 +66,7 @@ func (b *BulkWriteOptionsBuilder) SetOrdered(ordered bool) *BulkWriteOptionsBuil
 }
 
 // SetBypassDocumentValidation sets the value for the BypassDocumentValidation field. If true, writes
-// executed as part of the operation will opt out of document-level validation on the server. This option
-// is valid for MongoDB versions >= 3.2 and is ignored for previous server versions. The default value is
+// executed as part of the operation will opt out of document-level validation on the server. The default value is
 // false. See https://www.mongodb.com/docs/manual/core/schema-validation/ for more information about document
 // validation.
 func (b *BulkWriteOptionsBuilder) SetBypassDocumentValidation(bypass bool) *BulkWriteOptionsBuilder {

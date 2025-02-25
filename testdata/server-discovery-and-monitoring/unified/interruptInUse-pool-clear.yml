@@ -338,3 +338,4 @@ tests:
         databaseName: *databaseName
         documents:
           - { _id: 1, a : bar }
+

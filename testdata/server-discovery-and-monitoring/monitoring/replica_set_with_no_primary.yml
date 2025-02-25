@@ -110,4 +110,3 @@ phases:
                   hosts: []
                   passives: []
                   type: "PossiblePrimary"
-

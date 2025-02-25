@@ -70,8 +70,7 @@ func (ao *AggregateOptionsBuilder) SetBatchSize(i int32) *AggregateOptionsBuilde
 }
 
 // SetBypassDocumentValidation sets the value for the BypassDocumentValidation field. If true, writes
-// executed as part of the operation will opt out of document-level validation on the server. This
-// option is valid for MongoDB versions >= 3.2 and is ignored for previous server versions. The default value
+// executed as part of the operation will opt out of document-level validation on the server. The default value
 // is false. See https://www.mongodb.com/docs/manual/core/schema-validation/ for more information about
 // document validation.
 func (ao *AggregateOptionsBuilder) SetBypassDocumentValidation(b bool) *AggregateOptionsBuilder {
@@ -84,9 +83,8 @@ func (ao *AggregateOptionsBuilder) SetBypassDocumentValidation(b bool) *Aggregat
 	return ao
 }
 
-// SetCollation sets the value for the Collation field. Specifies a collation to use for string
-// comparisons during the operation. This option is only valid for MongoDB versions >= 3.4. For previous
-// server versions, the driver will return an error if this option is used. The default value is nil,
+// SetCollation sets the value for the Collation field. Specifies a collation to
+// use for string comparisons during the operation. The default value is nil,
 // which means the default collation of the collection will be used.
 func (ao *AggregateOptionsBuilder) SetCollation(c *Collation) *AggregateOptionsBuilder {
 	ao.Opts = append(ao.Opts, func(opts *AggregateOptions) error {
@@ -99,8 +97,7 @@ func (ao *AggregateOptionsBuilder) SetCollation(c *Collation) *AggregateOptionsB
 }
 
 // SetMaxAwaitTime sets the value for the MaxAwaitTime field. Specifies maximum amount of time
-// that the server should wait for new documents to satisfy a tailable cursor query. This option is
-// only valid for MongoDB versions >= 3.2 and is ignored for previous server versions.
+// that the server should wait for new documents to satisfy a tailable cursor query.
 func (ao *AggregateOptionsBuilder) SetMaxAwaitTime(d time.Duration) *AggregateOptionsBuilder {
 	ao.Opts = append(ao.Opts, func(opts *AggregateOptions) error {
 		opts.MaxAwaitTime = &d

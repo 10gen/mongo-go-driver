@@ -109,4 +109,3 @@ phases:
                   hosts: []
                   passives: []
                   type: "Unknown"
-
