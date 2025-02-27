@@ -254,6 +254,46 @@ func TestPrimitiveValueEncoders(t *testing.T) {
 				nil,
 			},
 			{
+				"omitzero map",
+				struct {
+					T map[string]string `bson:",omitzero"`
+				}{
+					T: map[string]string{},
+				},
+				docToBytes(D{}),
+				nil,
+			},
+			{
+				"omitzero slice",
+				struct {
+					T []struct{} `bson:",omitzero"`
+				}{
+					T: []struct{}{},
+				},
+				docToBytes(D{}),
+				nil,
+			},
+			{
+				"omitzero array",
+				struct {
+					T [4]int `bson:",omitzero"`
+				}{
+					T: [4]int{},
+				},
+				docToBytes(D{}),
+				nil,
+			},
+			{
+				"omitzero string",
+				struct {
+					T string `bson:",omitzero"`
+				}{
+					T: "",
+				},
+				docToBytes(D{}),
+				nil,
+			},
+			{
 				"struct{}",
 				struct {
 					A bool
@@ -744,6 +784,26 @@ func TestPrimitiveValueDecoders(t *testing.T) {
 				nil,
 			},
 			{
+				"omitzero",
+				struct {
+					A [4]int `bson:",omitzero"`
+				}{
+					A: [4]int{},
+				},
+				docToBytes(D{}),
+				nil,
+			},
+			{
+				"omitzero, empty time",
+				struct {
+					A time.Time `bson:",omitzero"`
+				}{
+					A: time.Time{},
+				},
+				docToBytes(D{}),
+				nil,
+			},
+			{
 				"no private fields",
 				noPrivateFields{a: "should be empty"},
 				docToBytes(D{}),
@@ -810,6 +870,18 @@ func TestPrimitiveValueDecoders(t *testing.T) {
 				struct {
 					A   string
 					Foo zeroTest `bson:"omitempty,inline"`
+				}{
+					A:   "bar",
+					Foo: zeroTest{true},
+				},
+				docToBytes(D{{"a", "bar"}}),
+				nil,
+			},
+			{
+				"inline, omitzero",
+				struct {
+					A   string
+					Foo zeroTest `bson:"omitzero,inline"`
 				}{
 					A:   "bar",
 					Foo: zeroTest{true},

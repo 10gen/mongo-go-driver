@@ -957,6 +957,18 @@ func TestClient_BSONOptions(t *testing.T) {
 			wantRaw:    bson.Raw(bsoncore.NewDocumentBuilder().Build()),
 		},
 		{
+			name: "OmitZero",
+			bsonOpts: &options.BSONOptions{
+				OmitZero: true,
+			},
+			doc: struct {
+				X [4]int
+			}{},
+			decodeInto: func() interface{} { return &bson.D{} },
+			want:       &bson.D{},
+			wantRaw:    bson.Raw(bsoncore.NewDocumentBuilder().Build()),
+		},
+		{
 			name: "StringifyMapKeysWithFmt",
 			bsonOpts: &options.BSONOptions{
 				StringifyMapKeysWithFmt: true,

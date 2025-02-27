@@ -38,6 +38,7 @@ import (
 type structTags struct {
 	Name      string
 	OmitEmpty bool
+	OmitZero  bool
 	MinSize   bool
 	Truncate  bool
 	Inline    bool
@@ -108,6 +109,8 @@ func parseTags(key string, tag string) (*structTags, error) {
 		switch str {
 		case "omitempty":
 			st.OmitEmpty = true
+		case "omitzero":
+			st.OmitZero = true
 		case "minsize":
 			st.MinSize = true
 		case "truncate":

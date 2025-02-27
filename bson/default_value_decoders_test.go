@@ -2806,6 +2806,26 @@ func TestDefaultValueDecoders(t *testing.T) {
 				nil,
 			},
 			{
+				"omitzero",
+				struct {
+					A [4]int `bson:",omitzero"`
+				}{
+					A: [4]int{},
+				},
+				[]byte{0x05, 0x00, 0x00, 0x00, 0x00},
+				nil,
+			},
+			{
+				"omitzero, empty time",
+				struct {
+					A time.Time `bson:",omitzero"`
+				}{
+					A: time.Time{},
+				},
+				[]byte{0x05, 0x00, 0x00, 0x00, 0x00},
+				nil,
+			},
+			{
 				"struct{}",
 				struct {
 					A bool

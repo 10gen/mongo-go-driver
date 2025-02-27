@@ -563,6 +563,7 @@ func TestMarshalValue(t *testing.T) {
 				NilMap      map[string]interface{}
 				NilStrings  []string
 				ZeroStruct  struct{ X int } `bson:"_,omitempty"`
+				ZeroArray   [4]int
 				StringerMap map[*bson.RawValue]bool
 				BSONField   string `json:"jsonField"`
 			}{
@@ -578,6 +579,7 @@ func TestMarshalValue(t *testing.T) {
 				NilMapAsEmpty:           true,
 				NilSliceAsEmpty:         true,
 				OmitZeroStruct:          true,
+				OmitZero:                true,
 				StringifyMapKeysWithFmt: true,
 				UseJSONStructTags:       true,
 			},

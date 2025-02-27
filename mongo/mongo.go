@@ -83,6 +83,9 @@ func getEncoder(
 		if opts.OmitZeroStruct {
 			enc.OmitZeroStruct()
 		}
+		if opts.OmitZero {
+			enc.OmitZero()
+		}
 		if opts.StringifyMapKeysWithFmt {
 			enc.StringifyMapKeysWithFmt()
 		}

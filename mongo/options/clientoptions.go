@@ -185,6 +185,9 @@ type BSONOptions struct {
 	// "omitempty" struct tag option is set.
 	OmitZeroStruct bool
 
+	// OmitZero causes the driver to omit zero values from the marshaled BSON.
+	OmitZero bool
+
 	// StringifyMapKeysWithFmt causes the driver to convert Go map keys to BSON
 	// document field name strings using fmt.Sprint instead of the default
 	// string conversion logic.

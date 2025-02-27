@@ -125,7 +125,7 @@ func (sc *structCodec) EncodeValue(ec EncodeContext, vw ValueWriter, val reflect
 		}
 
 		if errors.Is(err, errInvalidValue) {
-			if desc.omitEmpty {
+			if desc.omitEmpty || desc.omitZero {
 				continue
 			}
 			vw2, err := dw.WriteDocumentElement(desc.name)
@@ -144,6 +144,10 @@ func (sc *structCodec) EncodeValue(ec EncodeContext, vw ValueWriter, val reflect
 		}
 
 		encoder := desc.encoder
+
+		if isZero(rv) && (desc.omitZero || ec.omitZero) {
+			continue
+		}
 
 		var empty bool
 		if rv.Kind() == reflect.Interface {
@@ -171,6 +175,7 @@ func (sc *structCodec) EncodeValue(ec EncodeContext, vw ValueWriter, val reflect
 			nilSliceAsEmpty:         ec.nilSliceAsEmpty,
 			nilByteSliceAsEmpty:     ec.nilByteSliceAsEmpty,
 			omitZeroStruct:          ec.omitZeroStruct,
+			omitZero:                ec.omitZero,
 			useJSONStructTags:       ec.useJSONStructTags,
 		}
 		err = encoder.EncodeValue(ectx, vw2, rv)
@@ -361,6 +366,35 @@ func (sc *structCodec) DecodeValue(dc DecodeContext, vr ValueReader, val reflect
 	return nil
 }
 
+func isZero(v reflect.Value) bool {
+	kind := v.Kind()
+	if (kind != reflect.Ptr || !v.IsNil()) && v.Type().Implements(tZeroer) {
+		return v.Interface().(Zeroer).IsZero()
+	}
+	switch kind {
+	case reflect.Array:
+		n := v.Len()
+		for i := 0; i < n; i++ {
+			if !isZero(v.Index(i)) {
+				return false
+			}
+		}
+	case reflect.Struct:
+		vt := v.Type()
+		if vt == tTime {
+			return v.Interface().(time.Time).IsZero()
+		}
+		numField := vt.NumField()
+		for i := 0; i < numField; i++ {
+			if !isZero(v.Field(i)) {
+				return false
+			}
+		}
+		return true
+	}
+	return v.IsZero()
+}
+
 func isEmpty(v reflect.Value, omitZeroStruct bool) bool {
 	kind := v.Kind()
 	if (kind != reflect.Ptr || !v.IsNil()) && v.Type().Implements(tZeroer) {
@@ -404,6 +438,7 @@ type fieldDescription struct {
 	fieldName string // struct field name
 	idx       int
 	omitEmpty bool
+	omitZero  bool
 	minSize   bool
 	truncate  bool
 	inline    []int
@@ -517,6 +552,7 @@ func (sc *structCodec) describeStructSlow(
 		}
 		description.name = stags.Name
 		description.omitEmpty = stags.OmitEmpty
+		description.omitZero = stags.OmitZero
 		description.minSize = stags.MinSize
 		description.truncate = stags.Truncate
 

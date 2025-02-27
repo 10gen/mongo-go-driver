@@ -1248,6 +1248,24 @@ func TestDefaultValueEncoders(t *testing.T) {
 				nil,
 			},
 			{
+				"omitzero",
+				struct {
+					A [4]int `bson:",omitzero"`
+				}{},
+				[]byte{0x05, 0x00, 0x00, 0x00, 0x00},
+				nil,
+			},
+			{
+				"omitzero, empty time",
+				struct {
+					A time.Time `bson:",omitzero"`
+				}{
+					A: time.Time{},
+				},
+				[]byte{0x05, 0x00, 0x00, 0x00, 0x00},
+				nil,
+			},
+			{
 				"no private fields",
 				noPrivateFields{a: "should be empty"},
 				[]byte{0x05, 0x00, 0x00, 0x00, 0x00},

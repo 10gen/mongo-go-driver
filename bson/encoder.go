@@ -116,6 +116,11 @@ func (e *Encoder) OmitZeroStruct() {
 	e.ec.omitZeroStruct = true
 }
 
+// OmitZero causes the Encoder to omit zero values from the marshaled BSON.
+func (e *Encoder) OmitZero() {
+	e.ec.omitZero = true
+}
+
 // UseJSONStructTags causes the Encoder to fall back to using the "json" struct tag if a "bson"
 // struct tag is not specified.
 func (e *Encoder) UseJSONStructTags() {
