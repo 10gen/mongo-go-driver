@@ -584,11 +584,20 @@ func TestMapCodec(t *testing.T) {
 }
 
 func TestExtJSONEscapeKey(t *testing.T) {
-	doc := D{{Key: "\\usb#", Value: int32(1)}}
+	doc := D{
+		{
+			Key:   "\\usb#",
+			Value: int32(1),
+		},
+		{
+			Key:   "regex",
+			Value: Regex{Pattern: "ab\\\\\\\"ab", Options: "\""},
+		},
+	}
 	b, err := MarshalExtJSON(&doc, false, false)
 	noerr(t, err)
 
-	want := "{\"\\\\usb#\":1}"
+	want := `{"\\usb#":1,"regex":{"$regularExpression":{"pattern":"ab\\\\\\\"ab","options":"\""}}}`
 	if diff := cmp.Diff(want, string(b)); diff != "" {
 		t.Errorf("Marshaled documents do not match. got %v, want %v", string(b), want)
 	}
