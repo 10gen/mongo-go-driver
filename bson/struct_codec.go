@@ -118,6 +118,10 @@ func (sc *structCodec) EncodeValue(ec EncodeContext, vw ValueWriter, val reflect
 			}
 		}
 
+		if ec.omitEmpty {
+			desc.omitEmpty = true
+		}
+
 		desc.encoder, rv, err = lookupElementEncoder(ec, desc.encoder, rv)
 
 		if err != nil && !errors.Is(err, errInvalidValue) {

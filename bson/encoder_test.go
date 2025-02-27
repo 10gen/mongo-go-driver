@@ -248,6 +248,19 @@ func TestEncoderConfiguration(t *testing.T) {
 			}{},
 			want: bsoncore.NewDocumentBuilder().Build(),
 		},
+		// Test that OmitZeroStruct omits empty structs from the marshaled document if
+		// OmitEmpty is also set.
+		{
+			description: "OmitEmpty",
+			configure: func(enc *Encoder) {
+				enc.OmitZeroStruct()
+				enc.OmitEmpty()
+			},
+			input: struct {
+				Zero zeroStruct
+			}{},
+			want: bsoncore.NewDocumentBuilder().Build(),
+		},
 		// Test that UseJSONStructTags causes the Encoder to fall back to "json" struct tags if
 		// "bson" struct tags are not available.
 		{
