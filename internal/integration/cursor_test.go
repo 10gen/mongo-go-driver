@@ -17,6 +17,7 @@ import (
 	"go.mongodb.org/mongo-driver/v2/internal/assert"
 	"go.mongodb.org/mongo-driver/v2/internal/failpoint"
 	"go.mongodb.org/mongo-driver/v2/internal/integration/mtest"
+	"go.mongodb.org/mongo-driver/v2/internal/require"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
@@ -302,6 +303,75 @@ func TestCursor(t *testing.T) {
 		assert.Nil(mt, err, "expected getMore command to have batchSize")
 		batchSize = sizeVal.Int32()
 		assert.Equal(mt, int32(4), batchSize, "expected batchSize 4, got %v", batchSize)
+	})
+
+	tailableAwaitDataCursorOpts := mtest.NewOptions().MinServerVersion("4.4").
+		Topologies(mtest.ReplicaSet, mtest.Sharded, mtest.LoadBalanced, mtest.Single)
+
+	mt.RunOpts("tailable awaitData cursor", tailableAwaitDataCursorOpts, func(mt *mtest.T) {
+		mt.Run("apply remaining timeoutMS if less than maxAwaitTimeMS", func(mt *mtest.T) {
+			initCollection(mt, mt.Coll)
+			mt.ClearEvents()
+
+			// Create a find cursor
+			opts := options.Find().SetBatchSize(1).SetMaxAwaitTime(100 * time.Millisecond)
+
+			cursor, err := mt.Coll.Find(context.Background(), bson.D{}, opts)
+			require.NoError(mt, err)
+
+			_ = mt.GetStartedEvent() // Empty find from started list.
+
+			defer cursor.Close(context.Background())
+
+			ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
+			defer cancel()
+
+			// Iterate twice to force a getMore
+			cursor.Next(ctx)
+			cursor.Next(ctx)
+
+			cmd := mt.GetStartedEvent().Command
+
+			maxTimeMSRaw, err := cmd.LookupErr("maxTimeMS")
+			require.NoError(mt, err)
+
+			got, ok := maxTimeMSRaw.AsInt64OK()
+			require.True(mt, ok)
+
+			assert.LessOrEqual(mt, got, int64(50))
+		})
+
+		mt.RunOpts("apply maxAwaitTimeMS if less than remaining timeout", tailableAwaitDataCursorOpts, func(mt *mtest.T) {
+			initCollection(mt, mt.Coll)
+			mt.ClearEvents()
+
+			// Create a find cursor
+			opts := options.Find().SetBatchSize(1).SetMaxAwaitTime(50 * time.Millisecond)
+
+			cursor, err := mt.Coll.Find(context.Background(), bson.D{}, opts)
+			require.NoError(mt, err)
+
+			_ = mt.GetStartedEvent() // Empty find from started list.
+
+			defer cursor.Close(context.Background())
+
+			ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+			defer cancel()
+
+			// Iterate twice to force a getMore
+			cursor.Next(ctx)
+			cursor.Next(ctx)
+
+			cmd := mt.GetStartedEvent().Command
+
+			maxTimeMSRaw, err := cmd.LookupErr("maxTimeMS")
+			require.NoError(mt, err)
+
+			got, ok := maxTimeMSRaw.AsInt64OK()
+			require.True(mt, ok)
+
+			assert.LessOrEqual(mt, got, int64(50))
+		})
 	})
 }
 

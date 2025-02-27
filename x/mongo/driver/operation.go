@@ -1724,35 +1724,7 @@ func (op Operation) calculateMaxTimeMS(ctx context.Context, rttMin time.Duration
 		return 0, nil
 	}
 
-	deadline, ok := ctx.Deadline()
-	if !ok {
-		return 0, nil
-	}
-
-	remainingTimeout := time.Until(deadline)
-
-	// Always round up to the next millisecond value so we never truncate the calculated
-	// maxTimeMS value (e.g. 400 microseconds evaluates to 1ms, not 0ms).
-	maxTimeMS := int64((remainingTimeout - rttMin + time.Millisecond - 1) / time.Millisecond)
-	if maxTimeMS <= 0 {
-		return 0, fmt.Errorf(
-			"remaining time %v until context deadline is less than or equal to min network round-trip time %v (%v): %w",
-			remainingTimeout,
-			rttMin,
-			rttStats,
-			ErrDeadlineWouldBeExceeded)
-	}
-
-	// The server will return a "BadValue" error if maxTimeMS is greater
-	// than the maximum positive int32 value (about 24.9 days). If the
-	// user specified a timeout value greater than that,  omit maxTimeMS
-	// and let the client-side timeout handle cancelling the op if the
-	// timeout is ever reached.
-	if maxTimeMS > math.MaxInt32 {
-		return 0, nil
-	}
-
-	return maxTimeMS, nil
+	return driverutil.CalculateMaxTimeMS(ctx, rttMin, rttStats, ErrDeadlineWouldBeExceeded)
 }
 
 // updateClusterTimes updates the cluster times for the session and cluster clock attached to this

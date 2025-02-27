@@ -10,6 +10,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
@@ -1485,6 +1486,20 @@ func createFindCursor(ctx context.Context, operation *operation) (*cursorResult,
 			opts.SetSkip(int64(val.Int32()))
 		case "sort":
 			opts.SetSort(val.Document())
+		case "timeoutMode":
+			return nil, newSkipTestError("timeoutMode is not supported")
+		case "cursorType":
+			switch strings.ToLower(val.StringValue()) {
+			case "tailable":
+				opts.SetCursorType(options.Tailable)
+			case "tailableawait":
+				opts.SetCursorType(options.TailableAwait)
+			case "nontailable":
+				opts.SetCursorType(options.NonTailable)
+			}
+		case "maxAwaitTimeMS":
+			maxAwaitTimeMS := time.Duration(val.Int32()) * time.Millisecond
+			opts.SetMaxAwaitTime(maxAwaitTimeMS)
 		default:
 			return nil, fmt.Errorf("unrecognized find option %q", key)
 		}

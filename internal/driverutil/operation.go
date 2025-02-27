@@ -6,6 +6,13 @@
 
 package driverutil
 
+import (
+	"context"
+	"fmt"
+	"math"
+	"time"
+)
+
 // Operation Names should be sourced from the command reference documentation:
 // https://www.mongodb.com/docs/manual/reference/command/
 const (
@@ -30,3 +37,35 @@ const (
 	UpdateOp            = "update"            // UpdateOp is the name for updating
 	BulkWriteOp         = "bulkWrite"         // BulkWriteOp is the name for client-level bulk write
 )
+
+func CalculateMaxTimeMS(ctx context.Context, rttMin time.Duration, rttStats string, err error) (int64, error) {
+	deadline, ok := ctx.Deadline()
+	if !ok {
+		return 0, nil
+	}
+
+	remainingTimeout := time.Until(deadline)
+
+	// Always round up to the next millisecond value so we never truncate the calculated
+	// maxTimeMS value (e.g. 400 microseconds evaluates to 1ms, not 0ms).
+	maxTimeMS := int64((remainingTimeout - rttMin) / time.Millisecond)
+	if maxTimeMS <= 0 {
+		return 0, fmt.Errorf(
+			"remaining time %v until context deadline is less than or equal to min network round-trip time %v (%v): %w",
+			remainingTimeout,
+			rttMin,
+			rttStats,
+			err)
+	}
+
+	// The server will return a "BadValue" error if maxTimeMS is greater
+	// than the maximum positive int32 value (about 24.9 days). If the
+	// user specified a timeout value greater than that,  omit maxTimeMS
+	// and let the client-side timeout handle cancelling the op if the
+	// timeout is ever reached.
+	if maxTimeMS > math.MaxInt32 {
+		return 0, nil
+	}
+
+	return maxTimeMS, nil
+}
