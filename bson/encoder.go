@@ -108,12 +108,19 @@ func (e *Encoder) NilByteSliceAsEmpty() {
 // TODO struct fields once the logic is updated to also inspect private struct fields.
 
 // OmitZeroStruct causes the Encoder to consider the zero value for a struct (e.g. MyStruct{})
-// as empty and omit it from the marshaled BSON when the "omitempty" struct tag option is set.
+// as empty and omit it from the marshaled BSON when the "omitempty" struct tag option is set
+// or the OmitEmpty() method is called.
 //
 // Note that the Encoder only examines exported struct fields when determining if a struct is the
 // zero value. It considers pointers to a zero struct value (e.g. &MyStruct{}) not empty.
 func (e *Encoder) OmitZeroStruct() {
 	e.ec.omitZeroStruct = true
+}
+
+// OmitEmpty causes the Encoder to omit empty values from the marshaled BSON as the "omitempty"
+// struct tag option is set.
+func (e *Encoder) OmitEmpty() {
+	e.ec.omitEmpty = true
 }
 
 // UseJSONStructTags causes the Encoder to fall back to using the "json" struct tag if a "bson"

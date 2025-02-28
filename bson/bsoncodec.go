@@ -88,6 +88,7 @@ type EncodeContext struct {
 	nilSliceAsEmpty         bool
 	nilByteSliceAsEmpty     bool
 	omitZeroStruct          bool
+	omitEmpty               bool
 	useJSONStructTags       bool
 }
 
