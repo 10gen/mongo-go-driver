@@ -444,6 +444,69 @@
           ]
         }
       ]
+    },
+    {
+      "description": "poll waits after successful heartbeat",
+      "operations": [
+        {
+          "name": "createEntities",
+          "object": "testRunner",
+          "arguments": {
+            "entities": [
+              {
+                "client": {
+                  "id": "client",
+                  "uriOptions": {
+                    "serverMonitoringMode": "poll",
+                    "heartbeatFrequencyMS": 1000000
+                  },
+                  "useMultipleMongoses": false,
+                  "observeEvents": [
+                    "serverHeartbeatStartedEvent",
+                    "serverHeartbeatSucceededEvent"
+                  ]
+                }
+              },
+              {
+                "database": {
+                  "id": "db",
+                  "client": "client",
+                  "databaseName": "sdam-tests"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "waitForEvent",
+          "object": "testRunner",
+          "arguments": {
+            "client": "client",
+            "event": {
+              "serverHeartbeatSucceededEvent": {}
+            },
+            "count": 1
+          }
+        },
+        {
+          "name": "wait",
+          "object": "testRunner",
+          "arguments": {
+            "ms": 500
+          }
+        },
+        {
+          "name": "assertEventCount",
+          "object": "testRunner",
+          "arguments": {
+            "client": "client",
+            "event": {
+              "serverHeartbeatStartedEvent": {}
+            },
+            "count": 1
+          }
+        }
+      ]
     }
   ]
 }

@@ -3,7 +3,7 @@
   "schemaVersion": "1.11",
   "runOnRequirements": [
     {
-      "minServerVersion": "4.9",
+      "minServerVersion": "4.4",
       "serverless": "forbid",
       "topologies": [
         "replicaset",

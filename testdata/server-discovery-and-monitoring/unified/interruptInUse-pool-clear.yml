@@ -5,7 +5,7 @@ schemaVersion: "1.11"
 
 runOnRequirements:
   # failCommand appName requirements
-  - minServerVersion: "4.9"
+  - minServerVersion: "4.4"
     serverless: forbid
     topologies: [ replicaset, sharded ]
 
@@ -338,3 +338,4 @@ tests:
         databaseName: *databaseName
         documents:
           - { _id: 1, a : bar }
+

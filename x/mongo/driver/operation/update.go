@@ -207,8 +207,7 @@ func (u *Update) command(dst []byte, desc description.SelectedServer) ([]byte, e
 	return dst, nil
 }
 
-// BypassDocumentValidation allows the operation to opt-out of document level validation. Valid
-// for server versions >= 3.2. For servers < 3.2, this setting is ignored.
+// BypassDocumentValidation allows the operation to opt-out of document level validation.
 func (u *Update) BypassDocumentValidation(bypassDocumentValidation bool) *Update {
 	if u == nil {
 		u = new(Update)
@@ -219,8 +218,7 @@ func (u *Update) BypassDocumentValidation(bypassDocumentValidation bool) *Update
 }
 
 // Hint is a flag to indicate that the update document contains a hint. Hint is only supported by
-// servers >= 4.2. Older servers >= 3.4 will report an error for using the hint option. For servers <
-// 3.4, the driver will return an error if the hint option is used.
+// servers >= 4.2. Older servers will report an error for using the hint option.
 func (u *Update) Hint(hint bool) *Update {
 	if u == nil {
 		u = new(Update)
@@ -230,8 +228,7 @@ func (u *Update) Hint(hint bool) *Update {
 	return u
 }
 
-// ArrayFilters is a flag to indicate that the update document contains an arrayFilters field. This option is only
-// supported on server versions 3.6 and higher. For servers < 3.6, the driver will return an error.
+// ArrayFilters is a flag to indicate that the update document contains an arrayFilters field.
 func (u *Update) ArrayFilters(arrayFilters bool) *Update {
 	if u == nil {
 		u = new(Update)
