@@ -1045,7 +1045,8 @@ func aggregate(a aggregateParams, opts ...options.Lister[options.AggregateOption
 
 	err = op.Execute(a.ctx)
 	if err != nil {
-		if wce, ok := err.(driver.WriteCommandError); ok && wce.WriteConcernError != nil {
+		var wce driver.WriteCommandError
+		if errors.As(err, &wce) && wce.WriteConcernError != nil {
 			return nil, *convertDriverWriteConcernError(wce.WriteConcernError)
 		}
 		return nil, replaceErrors(err)
@@ -2041,8 +2042,8 @@ func (coll *Collection) drop(ctx context.Context) error {
 	err = op.Execute(ctx)
 
 	// ignore namespace not found errors
-	driverErr, ok := err.(driver.Error)
-	if !ok || (ok && !driverErr.NamespaceNotFound()) {
+	var driverErr driver.Error
+	if !errors.As(err, &driverErr) || !driverErr.NamespaceNotFound() {
 		return replaceErrors(err)
 	}
 	return nil

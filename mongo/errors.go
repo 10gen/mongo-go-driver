@@ -57,14 +57,14 @@ func replaceErrors(err error) error {
 	// ignored. For non-DDL write commands (insert, update, etc), acknowledgement
 	// should be be propagated at the result-level: e.g.,
 	// SingleResult.Acknowledged.
-	if err == driver.ErrUnacknowledgedWrite {
+	if errors.Is(err, driver.ErrUnacknowledgedWrite) {
 		return nil
 	}
 
 	if errors.Is(err, topology.ErrTopologyClosed) {
 		return ErrClientDisconnected
 	}
-	if de, ok := err.(driver.Error); ok {
+	if de := new(driver.Error); errors.As(err, de) {
 		return CommandError{
 			Code:    de.Code,
 			Message: de.Message,
@@ -74,7 +74,7 @@ func replaceErrors(err error) error {
 			Raw:     bson.Raw(de.Raw),
 		}
 	}
-	if qe, ok := err.(driver.QueryFailureError); ok {
+	if qe := new(driver.QueryFailureError); errors.As(err, qe) {
 		// qe.Message is "command failure"
 		ce := CommandError{
 			Name:    qe.Message,
@@ -93,7 +93,7 @@ func replaceErrors(err error) error {
 
 		return ce
 	}
-	if me, ok := err.(mongocrypt.Error); ok {
+	if me := new(mongocrypt.Error); errors.As(err, me) {
 		return MongocryptError{Code: me.Code, Message: me.Message}
 	}
 
@@ -101,7 +101,7 @@ func replaceErrors(err error) error {
 		return ErrNilValue
 	}
 
-	if marshalErr, ok := err.(codecutil.MarshalError); ok {
+	if marshalErr := new(codecutil.MarshalError); errors.As(err, marshalErr) {
 		return MarshalError{
 			Value: marshalErr.Value,
 			Err:   marshalErr.Err,
@@ -721,12 +721,12 @@ func processWriteError(err error) (returnResult, error) {
 	// ignored. For non-DDL write commands (insert, update, etc), acknowledgement
 	// should be be propagated at the result-level: e.g.,
 	// SingleResult.Acknowledged.
-	if err == driver.ErrUnacknowledgedWrite {
+	if errors.Is(err, driver.ErrUnacknowledgedWrite) {
 		return rrAllUnacknowledged, nil
 	}
 
-	wce, ok := err.(driver.WriteCommandError)
-	if !ok {
+	var wce driver.WriteCommandError
+	if !errors.As(err, &wce) {
 		return rrNone, replaceErrors(err)
 	}
 

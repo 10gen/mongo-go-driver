@@ -52,7 +52,8 @@ type IndexModel struct {
 }
 
 func isNamespaceNotFoundError(err error) bool {
-	if de, ok := err.(driver.Error); ok {
+	var de driver.Error
+	if errors.As(err, &de) {
 		return de.Code == 26
 	}
 	return false
