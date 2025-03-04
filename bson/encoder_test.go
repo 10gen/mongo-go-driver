@@ -11,6 +11,7 @@ import (
 	"errors"
 	"reflect"
 	"testing"
+	"time"
 
 	"go.mongodb.org/mongo-driver/v2/internal/assert"
 	"go.mongodb.org/mongo-driver/v2/internal/require"
@@ -246,6 +247,42 @@ func TestEncoderConfiguration(t *testing.T) {
 			input: struct {
 				Zero zeroStruct `bson:",omitempty"`
 			}{},
+			want: bsoncore.NewDocumentBuilder().Build(),
+		},
+		// Test that OmitZeroStruct omits empty structs from the marshaled document if
+		// OmitEmpty is also set.
+		{
+			description: "OmitEmpty with non-zeroer struct",
+			configure: func(enc *Encoder) {
+				enc.OmitZeroStruct()
+				enc.OmitEmpty()
+			},
+			input: struct {
+				Zero zeroStruct
+			}{},
+			want: bsoncore.NewDocumentBuilder().Build(),
+		},
+		// Test that OmitEmpty omits empty values from the marshaled document.
+		{
+			description: "OmitEmpty",
+			configure: func(enc *Encoder) {
+				enc.OmitEmpty()
+			},
+			input: struct {
+				Zero    zeroTest
+				I64     int64
+				F64     float64
+				String  string
+				Boolean bool
+				Slice   []int
+				Array   [0]int
+				Map     map[string]int
+				Bytes   []byte
+				Time    time.Time
+				Pointer *int
+			}{
+				Zero: zeroTest{true},
+			},
 			want: bsoncore.NewDocumentBuilder().Build(),
 		},
 		// Test that UseJSONStructTags causes the Encoder to fall back to "json" struct tags if

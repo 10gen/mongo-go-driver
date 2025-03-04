@@ -1094,6 +1094,8 @@ type zeroTest struct {
 
 func (z zeroTest) IsZero() bool { return z.reportZero }
 
+var _ Zeroer = zeroTest{}
+
 func compareZeroTest(_, _ zeroTest) bool { return true }
 
 func compareDecimal128(d1, d2 Decimal128) bool {
