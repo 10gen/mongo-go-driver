@@ -785,6 +785,14 @@ func (op Operation) Execute(ctx context.Context) error {
 			if moreToCome {
 				roundTrip = op.moreToComeRoundTrip
 			}
+
+			// Set context values to handle a pending read in case of a socket
+			// timeout.
+			if maxTimeMS != 0 {
+				ctx = driverutil.WithValueHasMaxTimeMS(ctx, true)
+				ctx = driverutil.WithRequestID(ctx, startedInfo.requestID)
+			}
+
 			res, err = roundTrip(ctx, conn, *wm)
 
 			if ep, ok := srvr.(ErrorProcessor); ok {
