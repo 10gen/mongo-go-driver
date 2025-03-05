@@ -91,17 +91,20 @@ const (
 
 // strings for pool command monitoring types
 const (
-	PoolCreated        = "ConnectionPoolCreated"
-	PoolReady          = "ConnectionPoolReady"
-	PoolCleared        = "ConnectionPoolCleared"
-	PoolClosedEvent    = "ConnectionPoolClosed"
-	ConnectionCreated  = "ConnectionCreated"
-	ConnectionReady    = "ConnectionReady"
-	ConnectionClosed   = "ConnectionClosed"
-	GetStarted         = "ConnectionCheckOutStarted"
-	GetFailed          = "ConnectionCheckOutFailed"
-	GetSucceeded       = "ConnectionCheckedOut"
-	ConnectionReturned = "ConnectionCheckedIn"
+	PoolCreated                    = "ConnectionPoolCreated"
+	PoolReady                      = "ConnectionPoolReady"
+	PoolCleared                    = "ConnectionPoolCleared"
+	PoolClosedEvent                = "ConnectionPoolClosed"
+	ConnectionCreated              = "ConnectionCreated"
+	ConnectionReady                = "ConnectionReady"
+	ConnectionClosed               = "ConnectionClosed"
+	GetStarted                     = "ConnectionCheckOutStarted"
+	GetFailed                      = "ConnectionCheckOutFailed"
+	GetSucceeded                   = "ConnectionCheckedOut"
+	ConnectionReturned             = "ConnectionCheckedIn"
+	ConnectionPendingReadStarted   = "ConnectionPendingReadStarted"
+	ConnectionPendingReadSucceeded = "ConnectionPendingReadSucceeded"
+	ConnectionPendingReadFailed    = "ConnectionPendingReadFailed"
 )
 
 // MonitorPoolOptions contains pool options as formatted in pool events
@@ -121,9 +124,11 @@ type PoolEvent struct {
 	Reason       string              `json:"reason"`
 	// ServiceID is only set if the Type is PoolCleared and the server is deployed behind a load balancer. This field
 	// can be used to distinguish between individual servers in a load balanced deployment.
-	ServiceID    *primitive.ObjectID `json:"serviceId"`
-	Interruption bool                `json:"interruptInUseConnections"`
-	Error        error               `json:"error"`
+	ServiceID     *primitive.ObjectID `json:"serviceId"`
+	Interruption  bool                `json:"interruptInUseConnections"`
+	Error         error               `json:"error"`
+	RequestID     int32               `json:"requestId"`
+	RemainingTime time.Duration       `json:"remainingTime"`
 }
 
 // PoolMonitor is a function that allows the user to gain access to events occurring in the pool
