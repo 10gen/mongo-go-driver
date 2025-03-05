@@ -19,6 +19,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/bsoncodec"
 	"go.mongodb.org/mongo-driver/bson/bsonoptions"
 	"go.mongodb.org/mongo-driver/bson/bsontype"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/internal/assert"
 	"go.mongodb.org/mongo-driver/x/bsonx/bsoncore"
 )
@@ -226,11 +227,20 @@ func TestMapCodec(t *testing.T) {
 }
 
 func TestExtJSONEscapeKey(t *testing.T) {
-	doc := D{{Key: "\\usb#", Value: int32(1)}}
+	doc := D{
+		{
+			Key:   "\\usb#",
+			Value: int32(1),
+		},
+		{
+			Key:   "regex",
+			Value: primitive.Regex{Pattern: "ab\\\\\\\"ab", Options: "\""},
+		},
+	}
 	b, err := MarshalExtJSON(&doc, false, false)
 	noerr(t, err)
 
-	want := "{\"\\\\usb#\":1}"
+	want := `{"\\usb#":1,"regex":{"$regularExpression":{"pattern":"ab\\\\\\\"ab","options":"\""}}}`
 	if diff := cmp.Diff(want, string(b)); diff != "" {
 		t.Errorf("Marshaled documents do not match. got %v, want %v", string(b), want)
 	}
