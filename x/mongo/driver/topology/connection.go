@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"go.mongodb.org/mongo-driver/internal/csot"
+	"go.mongodb.org/mongo-driver/internal/driverutil"
 	"go.mongodb.org/mongo-driver/mongo/address"
 	"go.mongodb.org/mongo-driver/mongo/description"
 	"go.mongodb.org/mongo-driver/x/bsonx/bsoncore"
@@ -45,6 +46,12 @@ var (
 )
 
 func nextConnectionID() uint64 { return atomic.AddUint64(&globalConnectionID, 1) }
+
+type pendingReadState struct {
+	remainingBytes int32
+	requestID      int32
+	remainingTime  *time.Duration
+}
 
 type connection struct {
 	// state must be accessed using the atomic package and should be at the beginning of the struct.
@@ -83,7 +90,8 @@ type connection struct {
 
 	// awaitRemainingBytes indicates the size of server response that was not completely
 	// read before returning the connection to the pool.
-	awaitRemainingBytes *int32
+	// awaitRemainingBytes *int32
+	pendingReadState *pendingReadState
 
 	// oidcTokenGenID is the monotonic generation ID for OIDC tokens, used to invalidate
 	// accessTokens in the OIDC authenticator cache.
@@ -452,7 +460,7 @@ func (c *connection) readWireMessage(ctx context.Context) ([]byte, error) {
 
 	dst, errMsg, err := c.read(ctx)
 	if err != nil {
-		if c.awaitRemainingBytes == nil {
+		if c.pendingReadState == nil {
 			// If the connection was not marked as awaiting response, use the
 			// pre-CSOT behavior and close the connection because we don't know
 			// if there are other bytes left to read.
@@ -523,8 +531,13 @@ func (c *connection) read(ctx context.Context) (bytesRead []byte, errMsg string,
 	// reading messages from an exhaust cursor.
 	n, err := io.ReadFull(c.nc, sizeBuf[:])
 	if err != nil {
-		if l := int32(n); l == 0 && isCSOTTimeout(err) {
-			c.awaitRemainingBytes = &l
+		if l := int32(n); l == 0 && isCSOTTimeout(err) && driverutil.HasMaxTimeMS(ctx) {
+			requestID, _ := driverutil.GetRequestID(ctx)
+
+			c.pendingReadState = &pendingReadState{
+				remainingBytes: l,
+				requestID:      requestID,
+			}
 		}
 		return nil, "incomplete read of message header", err
 	}
@@ -539,8 +552,13 @@ func (c *connection) read(ctx context.Context) (bytesRead []byte, errMsg string,
 	n, err = io.ReadFull(c.nc, dst[4:])
 	if err != nil {
 		remainingBytes := size - 4 - int32(n)
-		if remainingBytes > 0 && isCSOTTimeout(err) {
-			c.awaitRemainingBytes = &remainingBytes
+		if remainingBytes > 0 && isCSOTTimeout(err) && driverutil.HasMaxTimeMS(ctx) {
+			requestID, _ := driverutil.GetRequestID(ctx)
+
+			c.pendingReadState = &pendingReadState{
+				remainingBytes: remainingBytes,
+				requestID:      requestID,
+			}
 		}
 		return dst, "incomplete read of full message", err
 	}

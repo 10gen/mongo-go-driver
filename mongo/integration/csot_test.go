@@ -77,7 +77,7 @@ func TestCSOT_maxTimeMS(t *testing.T) {
 			},
 			sendsMaxTimeMSWithTimeoutMS:       true,
 			sendsMaxTimeMSWithContextDeadline: false,
-			preventsConnClosureWithTimeoutMS:  true,
+			preventsConnClosureWithTimeoutMS:  false,
 		},
 		{
 			desc:        "FindOneAndDelete",
@@ -206,7 +206,7 @@ func TestCSOT_maxTimeMS(t *testing.T) {
 			},
 			sendsMaxTimeMSWithTimeoutMS:       true,
 			sendsMaxTimeMSWithContextDeadline: false,
-			preventsConnClosureWithTimeoutMS:  true,
+			preventsConnClosureWithTimeoutMS:  false,
 		},
 		{
 			desc:        "Watch",
@@ -220,7 +220,7 @@ func TestCSOT_maxTimeMS(t *testing.T) {
 			},
 			sendsMaxTimeMSWithTimeoutMS:       true,
 			sendsMaxTimeMSWithContextDeadline: true,
-			preventsConnClosureWithTimeoutMS:  true,
+			preventsConnClosureWithTimeoutMS:  false,
 			// Change Streams aren't supported on standalone topologies.
 			topologies: []mtest.TopologyKind{
 				mtest.ReplicaSet,
