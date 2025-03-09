@@ -114,6 +114,8 @@ func createClientOptions(t testing.TB, opts bson.Raw) *options.ClientOptions {
 		case "socketTimeoutMS":
 			st := convertValueToMilliseconds(t, opt)
 			clientOpts.SetSocketTimeout(st)
+		case "timeoutMS":
+			clientOpts.SetTimeout(time.Duration(opt.Int32()) * time.Millisecond)
 		case "minPoolSize":
 			clientOpts.SetMinPoolSize(uint64(opt.AsInt64()))
 		case "maxPoolSize":
@@ -470,8 +472,9 @@ func errorFromResult(t testing.TB, result interface{}) *operationError {
 	if err != nil {
 		return nil
 	}
-	if expected.ErrorCodeName == nil && expected.ErrorContains == nil && len(expected.ErrorLabelsOmit) == 0 &&
-		len(expected.ErrorLabelsContain) == 0 {
+	if expected.ErrorCodeName == nil && expected.ErrorContains == nil &&
+		len(expected.ErrorLabelsOmit) == 0 && len(expected.ErrorLabelsContain) == 0 &&
+		expected.IsTimeoutError == nil {
 		return nil
 	}
 
@@ -561,6 +564,13 @@ func verifyError(expected *operationError, actual error) error {
 	for _, label := range expected.ErrorLabelsOmit {
 		if stringSliceContains(details.labels, label) {
 			return fmt.Errorf("expected error %w to not contain label %q", actual, label)
+		}
+	}
+	if expected.IsTimeoutError != nil {
+		isTimeoutError := mongo.IsTimeout(actual)
+		if *expected.IsTimeoutError != isTimeoutError {
+			return fmt.Errorf("expected error %w to be a timeout error: %v, is timeout error: %v",
+				actual, *expected.IsTimeoutError, isTimeoutError)
 		}
 	}
 	return nil

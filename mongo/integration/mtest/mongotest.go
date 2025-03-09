@@ -84,6 +84,11 @@ type WriteConcernErrorData struct {
 	ErrInfo     bson.Raw  `bson:"errInfo,omitempty"`
 }
 
+type failPoint struct {
+	name   string
+	client *mongo.Client
+}
+
 // T is a wrapper around testing.T.
 type T struct {
 	// connsCheckedOut is the net number of connections checked out during test execution.
@@ -103,7 +108,7 @@ type T struct {
 	createdColls      []*Collection // collections created in this test
 	proxyDialer       *proxyDialer
 	dbName, collName  string
-	failPointNames    []string
+	failPoints        []failPoint
 	minServerVersion  string
 	maxServerVersion  string
 	validTopologies   []TopologyKind
@@ -128,14 +133,16 @@ type T struct {
 	succeeded   []*event.CommandSucceededEvent
 	failed      []*event.CommandFailedEvent
 
-	Client *mongo.Client
-	DB     *mongo.Database
-	Coll   *mongo.Collection
+	Client    *mongo.Client
+	fpClients map[*mongo.Client]bool
+	DB        *mongo.Database
+	Coll      *mongo.Collection
 }
 
 func newT(wrapped *testing.T, opts ...*Options) *T {
 	t := &T{
-		T: wrapped,
+		T:         wrapped,
+		fpClients: make(map[*mongo.Client]bool),
 	}
 	for _, opt := range opts {
 		for _, optFn := range opt.optFuncs {
@@ -202,6 +209,12 @@ func (t *T) cleanup() {
 	// always disconnect the client regardless of clientType because Client.Disconnect will work against
 	// all deployments
 	_ = t.Client.Disconnect(context.Background())
+	for client, v := range t.fpClients {
+		if v {
+			_ = client.Disconnect(context.Background())
+		}
+	}
+	t.fpClients = nil
 }
 
 // Run creates a new T instance for a sub-test and runs the given callback. It also creates a new collection using the
@@ -254,9 +267,11 @@ func (t *T) RunOpts(name string, opts *Options, callback func(mt *T)) {
 				sub.ClearFailPoints()
 				sub.ClearCollections()
 			}
-			// only disconnect client if it's not being shared
+			// only disconnect client if it's not being shared and not used by fail points.
 			if sub.shareClient == nil || !*sub.shareClient {
-				_ = sub.Client.Disconnect(context.Background())
+				if _, ok := sub.fpClients[sub.Client]; !ok {
+					_ = sub.Client.Disconnect(context.Background())
+				}
 			}
 			assert.Equal(sub, 0, sessions, "%v sessions checked out", sessions)
 			assert.Equal(sub, 0, conns, "%v connections checked out", conns)
@@ -405,7 +420,10 @@ func (t *T) ResetClient(opts *options.ClientOptions) {
 		t.clientOpts = opts
 	}
 
-	_ = t.Client.Disconnect(context.Background())
+	// Disconnect client if it is not being used by fail points.
+	if _, ok := t.fpClients[t.Client]; !ok {
+		_ = t.Client.Disconnect(context.Background())
+	}
 	t.createTestClient()
 	t.DB = t.Client.Database(t.dbName)
 	t.Coll = t.DB.Collection(t.collName, t.collOpts)
@@ -562,7 +580,8 @@ func (t *T) SetFailPoint(fp FailPoint) {
 	if err := SetFailPoint(fp, t.Client); err != nil {
 		t.Fatal(err)
 	}
-	t.failPointNames = append(t.failPointNames, fp.ConfigureFailPoint)
+	t.fpClients[t.Client] = true
+	t.failPoints = append(t.failPoints, failPoint{fp.ConfigureFailPoint, t.Client})
 }
 
 // SetFailPointFromDocument sets the fail point represented by the given document for the client associated with T. This
@@ -574,30 +593,37 @@ func (t *T) SetFailPointFromDocument(fp bson.Raw) {
 		t.Fatal(err)
 	}
 
+	t.fpClients[t.Client] = true
 	name := fp.Index(0).Value().StringValue()
-	t.failPointNames = append(t.failPointNames, name)
+	t.failPoints = append(t.failPoints, failPoint{name, t.Client})
 }
 
 // TrackFailPoint adds the given fail point to the list of fail points to be disabled when the current test finishes.
 // This function does not create a fail point on the server.
-func (t *T) TrackFailPoint(fpName string) {
-	t.failPointNames = append(t.failPointNames, fpName)
+func (t *T) TrackFailPoint(fpName string, client *mongo.Client) {
+	t.fpClients[client] = true
+	t.failPoints = append(t.failPoints, failPoint{fpName, client})
 }
 
 // ClearFailPoints disables all previously set failpoints for this test.
 func (t *T) ClearFailPoints() {
-	db := t.Client.Database("admin")
-	for _, fp := range t.failPointNames {
+	for _, fp := range t.failPoints {
 		cmd := bson.D{
-			{"configureFailPoint", fp},
+			{"configureFailPoint", fp.name},
 			{"mode", "off"},
 		}
-		err := db.RunCommand(context.Background(), cmd).Err()
+		err := fp.client.Database("admin").RunCommand(context.Background(), cmd).Err()
 		if err != nil {
-			t.Fatalf("error clearing fail point %s: %v", fp, err)
+			t.Fatalf("error clearing fail point %s: %v", fp.name, err)
+		}
+		t.fpClients[fp.client] = false
+	}
+	for client, active := range t.fpClients {
+		if !active && client != t.Client {
+			_ = client.Disconnect(context.Background())
 		}
 	}
-	t.failPointNames = t.failPointNames[:0]
+	t.failPoints = t.failPoints[:0]
 }
 
 // CloneDatabase modifies the default database for this test to match the given options.
@@ -684,19 +710,17 @@ func (t *T) createTestClient() {
 		})
 	}
 
-	var err error
+	var uriOpts *options.ClientOptions
 	switch t.clientType {
 	case Pinned:
 		// pin to first mongos
 		pinnedHostList := []string{testContext.connString.Hosts[0]}
-		uriOpts := options.Client().ApplyURI(testContext.connString.Original).SetHosts(pinnedHostList)
-		t.Client, err = mongo.NewClient(uriOpts, clientOpts)
+		uriOpts = options.Client().ApplyURI(testContext.connString.Original).SetHosts(pinnedHostList)
 	case Mock:
 		// clear pool monitor to avoid configuration error
 		clientOpts.PoolMonitor = nil
 		t.mockDeployment = newMockDeployment()
 		clientOpts.Deployment = t.mockDeployment
-		t.Client, err = mongo.NewClient(clientOpts)
 	case Proxy:
 		t.proxyDialer = newProxyDialer()
 		clientOpts.SetDialer(t.proxyDialer)
@@ -706,16 +730,17 @@ func (t *T) createTestClient() {
 	case Default:
 		// Use a different set of options to specify the URI because clientOpts may already have a URI or host seedlist
 		// specified.
-		var uriOpts *options.ClientOptions
 		if clientOpts.Deployment == nil {
 			// Only specify URI if the deployment is not set to avoid setting topology/server options along with the
 			// deployment.
 			uriOpts = options.Client().ApplyURI(testContext.connString.Original)
 		}
-
-		// Pass in uriOpts first so clientOpts wins if there are any conflicting settings.
-		t.Client, err = mongo.NewClient(uriOpts, clientOpts)
 	}
+	t.clientOpts = options.MergeClientOptions(uriOpts, clientOpts)
+
+	var err error
+	// Pass in uriOpts first so clientOpts wins if there are any conflicting settings.
+	t.Client, err = mongo.NewClient(t.clientOpts)
 	if err != nil {
 		t.Fatalf("error creating client: %v", err)
 	}
