@@ -11,8 +11,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
+	"os"
 	"time"
 
 	"go.mongodb.org/mongo-driver/v2/internal/aws/credentials"
@@ -74,9 +74,12 @@ func (a *AssumeRoleProvider) RetrieveWithContext(ctx context.Context) (credentia
 	if tokenFile == "" && roleArn != "" {
 		return v, errors.New("AWS_ROLE_ARN is set, but AWS_WEB_IDENTITY_TOKEN_FILE is missing")
 	}
-	token, err := ioutil.ReadFile(tokenFile)
+	token, err := os.ReadFile(tokenFile)
 	if err != nil {
 		return v, err
+	}
+	if token[len(token)-1] == '\n' {
+		token = token[:len(token)-1]
 	}
 
 	sessionName := a.AwsRoleSessionNameEnv.Get()
