@@ -1,0 +1,450 @@
+{
+  "description": "driver-sessions-argument-for-correct-client",
+  "schemaVersion": "1.0",
+  "createEntities": [
+    {
+      "client": {
+        "id": "client0"
+      }
+    },
+    {
+      "client": {
+        "id": "client1"
+      }
+    },
+    {
+      "database": {
+        "id": "database0",
+        "client": "client0",
+        "databaseName": "session-tests"
+      }
+    },
+    {
+      "collection": {
+        "id": "collection0",
+        "database": "database0",
+        "collectionName": "test"
+      }
+    },
+    {
+      "session": {
+        "id": "session1",
+        "client": "client1"
+      }
+    }
+  ],
+  "tests": [
+    {
+      "description": "Session argument is for the right client",
+      "operations": [
+        {
+          "name": "insertOne",
+          "object": "collection0",
+          "arguments": {
+            "session": "session1",
+            "document": {
+              "_id": 2
+            }
+          },
+          "expectError": {
+            "isClientError": true
+          }
+        },
+        {
+          "name": "insertMany",
+          "object": "collection0",
+          "arguments": {
+            "session": "session1",
+            "documents": [
+              {
+                "_id": 1
+              }
+            ]
+          },
+          "expectError": {
+            "isClientError": true
+          }
+        },
+        {
+          "name": "deleteOne",
+          "object": "collection0",
+          "arguments": {
+            "session": "session1",
+            "filter": {
+              "x": 3
+            }
+          },
+          "expectError": {
+            "isClientError": true
+          }
+        },
+        {
+          "name": "deleteMany",
+          "object": "collection0",
+          "arguments": {
+            "session": "session1",
+            "filter": {
+              "x": 3
+            }
+          },
+          "expectError": {
+            "isClientError": true
+          }
+        },
+        {
+          "name": "updateOne",
+          "object": "collection0",
+          "arguments": {
+            "session": "session1",
+            "filter": {
+              "x": 3
+            },
+            "update": {
+              "$set": {
+                "x": 2
+              }
+            }
+          },
+          "expectError": {
+            "isClientError": true
+          }
+        },
+        {
+          "name": "updateMany",
+          "object": "collection0",
+          "arguments": {
+            "session": "session1",
+            "filter": {
+              "x": 3
+            },
+            "update": {
+              "$set": {
+                "x": 2
+              }
+            }
+          },
+          "expectError": {
+            "isClientError": true
+          }
+        },
+        {
+          "name": "updateSearchIndex",
+          "object": "collection0",
+          "arguments": {
+            "session": "session1",
+            "name": "test index",
+            "definition": {}
+          },
+          "expectError": {
+            "isClientError": true
+          }
+        },
+        {
+          "name": "replaceOne",
+          "object": "collection0",
+          "arguments": {
+            "session": "session1",
+            "filter": {
+              "x": 3
+            },
+            "replacement": {
+              "x": 2
+            }
+          },
+          "expectError": {
+            "isClientError": true
+          }
+        },
+        {
+          "name": "aggregate",
+          "object": "collection0",
+          "arguments": {
+            "session": "session1",
+            "pipeline": []
+          },
+          "expectError": {
+            "isClientError": true
+          }
+        },
+        {
+          "name": "bulkWrite",
+          "object": "collection0",
+          "arguments": {
+            "session": "session1",
+            "requests": []
+          },
+          "expectError": {
+            "isClientError": true
+          }
+        },
+        {
+          "name": "estimatedDocumentCount",
+          "object": "collection0",
+          "arguments": {
+            "session": "session1"
+          },
+          "expectError": {
+            "isClientError": true
+          }
+        },
+        {
+          "name": "distinct",
+          "object": "collection0",
+          "arguments": {
+            "session": "session1",
+            "fieldName": "x",
+            "filter": {}
+          },
+          "expectError": {
+            "isClientError": true
+          }
+        },
+        {
+          "name": "find",
+          "object": "collection0",
+          "arguments": {
+            "session": "session1",
+            "filter": {
+              "_id": 1
+            }
+          },
+          "expectError": {
+            "isClientError": true
+          }
+        },
+        {
+          "name": "findOne",
+          "object": "collection0",
+          "arguments": {
+            "session": "session1",
+            "filter": {
+              "_id": 1
+            }
+          },
+          "expectError": {
+            "isClientError": true
+          }
+        },
+        {
+          "name": "findOneAndDelete",
+          "object": "collection0",
+          "arguments": {
+            "session": "session1",
+            "filter": {
+              "x": 3
+            }
+          },
+          "expectError": {
+            "isClientError": true
+          }
+        },
+        {
+          "name": "findOneAndReplace",
+          "object": "collection0",
+          "arguments": {
+            "session": "session1",
+            "filter": {
+              "x": 3
+            },
+            "replacement": {
+              "x": 2
+            }
+          },
+          "expectError": {
+            "isClientError": true
+          }
+        },
+        {
+          "name": "findOneAndUpdate",
+          "object": "collection0",
+          "arguments": {
+            "session": "session1",
+            "filter": {
+              "x": 3
+            },
+            "update": {
+              "$set": {
+                "x": 2
+              }
+            }
+          },
+          "expectError": {
+            "isClientError": true
+          }
+        },
+        {
+          "name": "countDocuments",
+          "object": "collection0",
+          "arguments": {
+            "session": "session1",
+            "filter": {}
+          },
+          "expectError": {
+            "isClientError": true
+          }
+        },
+        {
+          "name": "createFindCursor",
+          "object": "collection0",
+          "arguments": {
+            "session": "session1",
+            "filter": {}
+          },
+          "expectError": {
+            "isClientError": true
+          }
+        },
+        {
+          "name": "createIndex",
+          "object": "collection0",
+          "arguments": {
+            "session": "session1",
+            "name": "foo",
+            "keys": {
+              "x": 1
+            }
+          },
+          "expectError": {
+            "isClientError": true
+          }
+        },
+        {
+          "name": "createSearchIndex",
+          "object": "collection0",
+          "arguments": {
+            "session": "session1",
+            "model": {}
+          },
+          "expectError": {
+            "isClientError": true
+          }
+        },
+        {
+          "name": "createSearchIndexes",
+          "object": "collection0",
+          "arguments": {
+            "session": "session1",
+            "models": []
+          },
+          "expectError": {
+            "isClientError": true
+          }
+        },
+        {
+          "name": "dropIndex",
+          "object": "collection0",
+          "arguments": {
+            "session": "session1",
+            "name": "x_1"
+          },
+          "expectError": {
+            "isClientError": true
+          }
+        },
+        {
+          "name": "dropIndexes",
+          "object": "collection0",
+          "arguments": {
+            "session": "session1"
+          },
+          "expectError": {
+            "isClientError": true
+          }
+        },
+        {
+          "name": "dropSearchIndex",
+          "object": "collection0",
+          "arguments": {
+            "session": "session1",
+            "name": "x_1"
+          },
+          "expectError": {
+            "isClientError": true
+          }
+        },
+        {
+          "name": "listIndexes",
+          "object": "collection0",
+          "arguments": {
+            "session": "session1"
+          },
+          "expectError": {
+            "isClientError": true
+          }
+        },
+        {
+          "name": "listSearchIndexes",
+          "object": "collection0",
+          "arguments": {
+            "session": "session1"
+          },
+          "expectError": {
+            "isClientError": true
+          }
+        },
+        {
+          "name": "listCollections",
+          "object": "database0",
+          "arguments": {
+            "session": "session1"
+          },
+          "expectError": {
+            "isClientError": true
+          }
+        },
+        {
+          "name": "listCollectionNames",
+          "object": "database0",
+          "arguments": {
+            "session": "session1"
+          },
+          "expectError": {
+            "isClientError": true
+          }
+        },
+        {
+          "name": "dropCollection",
+          "object": "database0",
+          "arguments": {
+            "collection": "collection0",
+            "session": "session1"
+          },
+          "expectError": {
+            "isClientError": true
+          }
+        },
+        {
+          "name": "listDatabases",
+          "object": "client0",
+          "arguments": {
+            "session": "session1"
+          },
+          "expectError": {
+            "isClientError": true
+          }
+        }
+      ]
+    },
+    {
+      "description": "Session argument is for the right client (clientBulkWrite)",
+      "runOnRequirements": [
+        {
+          "minServerVersion": "8.0"
+        }
+      ],
+      "operations": [
+        {
+          "name": "clientBulkWrite",
+          "object": "client0",
+          "arguments": {
+            "models": [],
+            "session": "session1"
+          },
+          "expectError": {
+            "isClientError": true
+          }
+        }
+      ]
+    }
+  ]
+}
