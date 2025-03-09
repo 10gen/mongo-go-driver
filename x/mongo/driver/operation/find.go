@@ -25,46 +25,47 @@ import (
 
 // Find performs a find operation.
 type Find struct {
-	authenticator       driver.Authenticator
-	allowDiskUse        *bool
-	allowPartialResults *bool
-	awaitData           *bool
-	batchSize           *int32
-	collation           bsoncore.Document
-	comment             *string
-	filter              bsoncore.Document
-	hint                bsoncore.Value
-	let                 bsoncore.Document
-	limit               *int64
-	max                 bsoncore.Document
-	maxTime             *time.Duration
-	min                 bsoncore.Document
-	noCursorTimeout     *bool
-	oplogReplay         *bool
-	projection          bsoncore.Document
-	returnKey           *bool
-	showRecordID        *bool
-	singleBatch         *bool
-	skip                *int64
-	snapshot            *bool
-	sort                bsoncore.Document
-	tailable            *bool
-	session             *session.Client
-	clock               *session.ClusterClock
-	collection          string
-	monitor             *event.CommandMonitor
-	crypt               driver.Crypt
-	database            string
-	deployment          driver.Deployment
-	readConcern         *readconcern.ReadConcern
-	readPreference      *readpref.ReadPref
-	selector            description.ServerSelector
-	retry               *driver.RetryMode
-	result              driver.CursorResponse
-	serverAPI           *driver.ServerAPIOptions
-	timeout             *time.Duration
-	omitCSOTMaxTimeMS   bool
-	logger              *logger.Logger
+	authenticator                driver.Authenticator
+	allowDiskUse                 *bool
+	allowPartialResults          *bool
+	awaitData                    *bool
+	batchSize                    *int32
+	collation                    bsoncore.Document
+	comment                      *string
+	filter                       bsoncore.Document
+	hint                         bsoncore.Value
+	let                          bsoncore.Document
+	limit                        *int64
+	max                          bsoncore.Document
+	maxTime                      *time.Duration
+	min                          bsoncore.Document
+	noCursorTimeout              *bool
+	oplogReplay                  *bool
+	projection                   bsoncore.Document
+	returnKey                    *bool
+	showRecordID                 *bool
+	singleBatch                  *bool
+	skip                         *int64
+	snapshot                     *bool
+	sort                         bsoncore.Document
+	tailable                     *bool
+	session                      *session.Client
+	clock                        *session.ClusterClock
+	collection                   string
+	monitor                      *event.CommandMonitor
+	crypt                        driver.Crypt
+	database                     string
+	deployment                   driver.Deployment
+	readConcern                  *readconcern.ReadConcern
+	readPreference               *readpref.ReadPref
+	selector                     description.ServerSelector
+	retry                        *driver.RetryMode
+	result                       driver.CursorResponse
+	serverAPI                    *driver.ServerAPIOptions
+	timeout                      *time.Duration
+	omitCSOTMaxTimeMS            bool
+	logger                       *logger.Logger
+	unsafeAllowSeperateMaxTimeMS bool
 }
 
 // NewFind constructs and returns a new Find.
@@ -93,27 +94,28 @@ func (f *Find) Execute(ctx context.Context) error {
 	}
 
 	return driver.Operation{
-		CommandFn:         f.command,
-		ProcessResponseFn: f.processResponse,
-		RetryMode:         f.retry,
-		Type:              driver.Read,
-		Client:            f.session,
-		Clock:             f.clock,
-		CommandMonitor:    f.monitor,
-		Crypt:             f.crypt,
-		Database:          f.database,
-		Deployment:        f.deployment,
-		MaxTime:           f.maxTime,
-		ReadConcern:       f.readConcern,
-		ReadPreference:    f.readPreference,
-		Selector:          f.selector,
-		Legacy:            driver.LegacyFind,
-		ServerAPI:         f.serverAPI,
-		Timeout:           f.timeout,
-		Logger:            f.logger,
-		Name:              driverutil.FindOp,
-		OmitCSOTMaxTimeMS: f.omitCSOTMaxTimeMS,
-		Authenticator:     f.authenticator,
+		CommandFn:                    f.command,
+		ProcessResponseFn:            f.processResponse,
+		RetryMode:                    f.retry,
+		Type:                         driver.Read,
+		Client:                       f.session,
+		Clock:                        f.clock,
+		CommandMonitor:               f.monitor,
+		Crypt:                        f.crypt,
+		Database:                     f.database,
+		Deployment:                   f.deployment,
+		MaxTime:                      f.maxTime,
+		ReadConcern:                  f.readConcern,
+		ReadPreference:               f.readPreference,
+		Selector:                     f.selector,
+		Legacy:                       driver.LegacyFind,
+		ServerAPI:                    f.serverAPI,
+		Timeout:                      f.timeout,
+		Logger:                       f.logger,
+		Name:                         driverutil.FindOp,
+		OmitCSOTMaxTimeMS:            f.omitCSOTMaxTimeMS,
+		Authenticator:                f.authenticator,
+		UnsafeAllowSeperateMaxTimeMS: f.unsafeAllowSeperateMaxTimeMS,
 	}.Execute(ctx)
 
 }
@@ -585,5 +587,15 @@ func (f *Find) Authenticator(authenticator driver.Authenticator) *Find {
 	}
 
 	f.authenticator = authenticator
+	return f
+}
+
+// UnsafeAllowSeperateMaxTimeMS allows CSOT with independent maxTimeMS.
+func (f *Find) UnsafeAllowSeperateMaxTimeMS(val bool) *Find {
+	if f == nil {
+		f = new(Find)
+	}
+
+	f.unsafeAllowSeperateMaxTimeMS = val
 	return f
 }

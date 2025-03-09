@@ -324,6 +324,19 @@ type Operation struct {
 	// where a default read preference is used when the operation
 	// ReadPreference is not specified.
 	omitReadPreference bool
+
+	// UnsafeAllowSeperateMaxTimeMS is allows setting maxTimeMS independently of
+	// the context deadline when CSOT is enabled (client.Timeout >=0). If a user
+	// provides a context deadline it will be used for all blocking client-side
+	// logic (e.g. socket timeouts, checking out connections, etc).
+	//
+	// This switch is untested and experimental.
+	//
+	// ⚠️  **USE WITH CAUTION** ⚠️
+	//
+	// Deprecated: This option is for internal use only and should not be set. It
+	// may be changed or removed in any release.
+	UnsafeAllowSeperateMaxTimeMS bool
 }
 
 // shouldEncrypt returns true if this operation should automatically be encrypted.
@@ -1593,6 +1606,8 @@ func (op Operation) addClusterTime(dst []byte, desc description.SelectedServer) 
 // operation's MaxTimeMS if set. If no MaxTimeMS is set on the operation, and context is
 // not a Timeout context, calculateMaxTimeMS returns 0.
 func (op Operation) calculateMaxTimeMS(ctx context.Context, mon RTTMonitor) (uint64, error) {
+	unsafelyOverrideCSOT := op.UnsafeAllowSeperateMaxTimeMS && op.MaxTime != nil
+
 	// If CSOT is enabled and we're not omitting the CSOT-calculated maxTimeMS
 	// value, then calculate maxTimeMS.
 	//
@@ -1603,7 +1618,7 @@ func (op Operation) calculateMaxTimeMS(ctx context.Context, mon RTTMonitor) (uin
 	// TODO(GODRIVER-2944): Remove or refactor this logic when we add the
 	// "timeoutMode" option, which will allow users to opt-in to the
 	// CSOT-calculated maxTimeMS values if that's the behavior they want.
-	if csot.IsTimeoutContext(ctx) && !op.OmitCSOTMaxTimeMS {
+	if csot.IsTimeoutContext(ctx) && !op.OmitCSOTMaxTimeMS && !unsafelyOverrideCSOT {
 		if deadline, ok := ctx.Deadline(); ok {
 			remainingTimeout := time.Until(deadline)
 			rtt90 := mon.P90()

@@ -17,6 +17,7 @@ import (
 	"go.mongodb.org/mongo-driver/event"
 	"go.mongodb.org/mongo-driver/internal/assert"
 	"go.mongodb.org/mongo-driver/internal/eventtest"
+	"go.mongodb.org/mongo-driver/internal/ptrutil"
 	"go.mongodb.org/mongo-driver/internal/require"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/integration/mtest"
@@ -279,6 +280,9 @@ func TestCSOT_maxTimeMS(t *testing.T) {
 
 		evt := getStartedEvent(mt, command)
 		maxTimeVal := evt.Command.Lookup("maxTimeMS")
+		if len(maxTimeVal.Value) == 0 {
+			return -1
+		}
 
 		require.Greater(mt,
 			len(maxTimeVal.Value),
@@ -590,6 +594,150 @@ func TestCSOT_maxTimeMS(t *testing.T) {
 			int64(5_000),
 			maxTimeMS,
 			"expected maxTimeMS to be equal to the MaxTime value")
+	})
+
+	mt.Run("UnsafeAllowSeperateMaxTimeMSWithCSOT", func(mt *mtest.T) {
+		ops := []struct {
+			name        string
+			commandName string
+			fn          func(ctx context.Context, coll *mongo.Collection, maxTime *time.Duration) error
+			cursorOp    bool
+		}{
+			{
+				name:        "FindOne",
+				commandName: "find",
+				fn: func(ctx context.Context, coll *mongo.Collection, maxTime *time.Duration) error {
+					opts := options.FindOne()
+					opts.UnsafeAllowSeperateMaxTimeMS = true
+					if maxTime != nil {
+						opts.SetMaxTime(*maxTime)
+					}
+					res := coll.FindOne(ctx, bson.D{}, opts)
+					return res.Err()
+				},
+				cursorOp: false,
+			},
+			//{
+			//	name:        "Find",
+			//	commandName: "find",
+			//	fn: func(ctx context.Context, coll *mongo.Collection, maxTime *time.Duration) error {
+			//		opts := options.Find()
+			//		if maxTime != nil {
+			//			opts.SetMaxTime(*maxTime)
+			//		}
+			//		_, err := coll.Find(ctx, bson.D{}, opts)
+			//		return err
+			//	},
+			//	cursorOp: true,
+			// },
+			//{
+			//	name:        "FindOneAndUpdate",
+			//	commandName: "findAndModify",
+			//	fn: func(ctx context.Context, coll *mongo.Collection, maxTime *time.Duration) error {
+			//		opts := options.FindOneAndUpdate()
+			//		if maxTime != nil {
+			//			opts.SetMaxTime(*maxTime)
+			//		}
+			//		res := coll.FindOneAndUpdate(ctx, bson.D{}, bson.M{"$set": bson.M{"key": "value"}}, opts)
+			//		return res.Err()
+			//	},
+			//	cursorOp: false,
+			// },
+			//{
+			//	name:        "Aggregate",
+			//	commandName: "aggregate",
+			//	fn: func(ctx context.Context, coll *mongo.Collection, maxTime *time.Duration) error {
+			//		opts := options.Aggregate()
+			//		if maxTime != nil {
+			//			opts.SetMaxTime(*maxTime)
+			//		}
+			//		_, err := coll.Aggregate(ctx, bson.D{}, opts)
+			//		return err
+			//	},
+			//	cursorOp: true,
+			// },
+		}
+
+		for _, op := range ops {
+			mt.Run(op.name, func(mt *mtest.T) {
+				testCases := []struct {
+					name       string
+					ctxTimeout *time.Duration
+					maxTime    *time.Duration
+					wantMS     int
+					wantDelta  float64
+				}{
+					{
+						name:       "CSOT with context deadline with maxTime",
+						ctxTimeout: ptrutil.Ptr(10 * time.Second),
+						maxTime:    ptrutil.Ptr(5 * time.Second),
+						wantMS:     5_000,
+						wantDelta:  0,
+					},
+					{
+						name:       "CSOT with context deadline without maxTime",
+						ctxTimeout: ptrutil.Ptr(10 * time.Second),
+						maxTime:    nil,
+						wantMS:     10_000,
+						wantDelta:  500,
+					},
+					{
+						name:       "CSOT without context deadline with maxTime",
+						ctxTimeout: nil,
+						maxTime:    ptrutil.Ptr(5 * time.Second),
+						wantMS:     5_000,
+						wantDelta:  0,
+					},
+					{
+						name:       "CSOT without context deadline with maxTime",
+						ctxTimeout: nil,
+						maxTime:    nil,
+						wantMS:     15_000,
+						wantDelta:  500,
+					},
+				}
+
+				for _, tc := range testCases {
+					mt.Run(tc.name, func(mt *mtest.T) {
+						// driver.UnsafeAllowSeperateMaxTimeMSWithCSOT = true
+						// defer func() { driver.UnsafeAllowSeperateMaxTimeMSWithCSOT = false }()
+
+						// Enable CSOT
+						mt.ResetClient(options.Client().SetTimeout(15 * time.Second))
+
+						var hasDeadline bool
+						ctx := context.Background()
+						if tc.ctxTimeout != nil {
+							var cancel context.CancelFunc
+
+							ctx, cancel = context.WithTimeout(ctx, *tc.ctxTimeout)
+							defer cancel()
+
+							hasDeadline = true
+						}
+
+						// Insert some documents so the collection isn't empty.
+						insertTwoDocuments(mt)
+
+						err := op.fn(ctx, mt.Coll, tc.maxTime)
+						require.NoError(mt, err)
+
+						// Assert that maxTimeMS is set and that it's equal to the MaxTime
+						// value.
+						maxTimeMS := getMaxTimeMS(mt, op.commandName)
+						if op.cursorOp && tc.maxTime == nil && hasDeadline {
+							assert.Equal(mt, int64(-1), maxTimeMS)
+						} else {
+							assert.InDelta(mt,
+								tc.wantMS,
+								maxTimeMS,
+								tc.wantDelta,
+								"expected maxTimeMS to be equal to the MaxTime value")
+						}
+					})
+				}
+			})
+		}
 	})
 }
 

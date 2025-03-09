@@ -1226,13 +1226,14 @@ func (coll *Collection) Find(ctx context.Context, filter interface{},
 	//
 	// See DRIVERS-2722 for more detail.
 	_, deadlineSet := ctx.Deadline()
-	return coll.find(ctx, filter, deadlineSet, opts...)
+	return coll.find(ctx, filter, deadlineSet, false, opts...)
 }
 
 func (coll *Collection) find(
 	ctx context.Context,
 	filter interface{},
 	omitCSOTMaxTimeMS bool,
+	unsafeAllowSeperateMaxTimeMS bool,
 	opts ...*options.FindOptions,
 ) (cur *Cursor, err error) {
 
@@ -1271,7 +1272,8 @@ func (coll *Collection) find(
 		ClusterClock(coll.client.clock).Database(coll.db.name).Collection(coll.name).
 		Deployment(coll.client.deployment).Crypt(coll.client.cryptFLE).ServerAPI(coll.client.serverAPI).
 		Timeout(coll.client.timeout).MaxTime(fo.MaxTime).Logger(coll.client.logger).
-		OmitCSOTMaxTimeMS(omitCSOTMaxTimeMS).Authenticator(coll.client.authenticator)
+		OmitCSOTMaxTimeMS(omitCSOTMaxTimeMS).Authenticator(coll.client.authenticator).
+		UnsafeAllowSeperateMaxTimeMS(unsafeAllowSeperateMaxTimeMS)
 
 	cursorOpts := coll.client.createBaseCursorOptions()
 
@@ -1419,6 +1421,7 @@ func (coll *Collection) FindOne(ctx context.Context, filter interface{},
 		ctx = context.Background()
 	}
 
+	var unsafeAllowSeperateMaxTimeMS bool
 	findOpts := make([]*options.FindOptions, 0, len(opts))
 	for _, opt := range opts {
 		if opt == nil {
@@ -1444,12 +1447,16 @@ func (coll *Collection) FindOne(ctx context.Context, filter interface{},
 			Snapshot:            opt.Snapshot,
 			Sort:                opt.Sort,
 		})
+
+		if opt.UnsafeAllowSeperateMaxTimeMS {
+			unsafeAllowSeperateMaxTimeMS = opt.UnsafeAllowSeperateMaxTimeMS
+		}
 	}
 	// Unconditionally send a limit to make sure only one document is returned and the cursor is not kept open
 	// by the server.
 	findOpts = append(findOpts, options.Find().SetLimit(-1))
 
-	cursor, err := coll.find(ctx, filter, false, findOpts...)
+	cursor, err := coll.find(ctx, filter, false, unsafeAllowSeperateMaxTimeMS, findOpts...)
 	return &SingleResult{
 		ctx:      ctx,
 		cur:      cursor,

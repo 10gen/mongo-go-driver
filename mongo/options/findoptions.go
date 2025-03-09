@@ -418,6 +418,19 @@ type FindOneOptions struct {
 	// A document specifying the sort order to apply to the query. The first document in the sorted order will be
 	// returned. The driver will return an error if the sort parameter is a multi-key map.
 	Sort interface{}
+
+	// UnsafeAllowSeperateMaxTimeMS is allows setting maxTimeMS independently of
+	// the context deadline when CSOT is enabled (client.Timeout >=0). If a user
+	// provides a context deadline it will be used for all blocking client-side
+	// logic (e.g. socket timeouts, checking out connections, etc).
+	//
+	// This switch is untested and experimental.
+	//
+	// ⚠️  **USE WITH CAUTION** ⚠️
+	//
+	// Deprecated: This option is for internal use only and should not be set. It
+	// may be changed or removed in any release.
+	UnsafeAllowSeperateMaxTimeMS bool
 }
 
 // FindOne creates a new FindOneOptions instance.
@@ -614,6 +627,9 @@ func MergeFindOneOptions(opts ...*FindOneOptions) *FindOneOptions {
 		}
 		if opt.Sort != nil {
 			fo.Sort = opt.Sort
+		}
+		if opt.UnsafeAllowSeperateMaxTimeMS {
+			fo.UnsafeAllowSeperateMaxTimeMS = opt.UnsafeAllowSeperateMaxTimeMS
 		}
 	}
 
