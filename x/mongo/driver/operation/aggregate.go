@@ -198,7 +198,7 @@ func (a *Aggregate) BypassDocumentValidation(bypassDocumentValidation bool) *Agg
 	return a
 }
 
-// Collation specifies a collation. This option is only valid for server versions 3.4 and above.
+// Collation specifies a collation.
 func (a *Aggregate) Collation(collation bsoncore.Document) *Aggregate {
 	if a == nil {
 		a = new(Aggregate)

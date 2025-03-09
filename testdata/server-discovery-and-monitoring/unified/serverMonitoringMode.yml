@@ -171,3 +171,43 @@ tests:
       # Wait for the second serverHeartbeatStartedEvent to ensure we do not stream.
       - *waitForSecondHeartbeatStarted
     expectEvents: *pollingStartedEvents
+
+  - description: "poll waits after successful heartbeat"
+    operations:
+      - name: createEntities
+        object: testRunner
+        arguments:
+          entities:
+            - client:
+                id: client
+                uriOptions:
+                  serverMonitoringMode: "poll"
+                  heartbeatFrequencyMS: 1000000
+                useMultipleMongoses: false
+                observeEvents:
+                  - serverHeartbeatStartedEvent
+                  - serverHeartbeatSucceededEvent
+            - database:
+                id: db
+                client: client
+                databaseName: sdam-tests
+      # Wait for the first serverHeartbeatSucceededEvent to ensure we start polling.
+      - name: waitForEvent
+        object: testRunner
+        arguments:
+          client: client
+          event:
+            serverHeartbeatSucceededEvent: {}
+          count: 1
+      # Wait for a bit longer to ensure we wait heartbeatFrequencyMS before starting the next check.
+      - name: wait
+        object: testRunner
+        arguments:
+          ms: 500
+      - name: assertEventCount
+        object: testRunner
+        arguments:
+          client: client
+          event:
+            serverHeartbeatStartedEvent: {}
+          count: 1

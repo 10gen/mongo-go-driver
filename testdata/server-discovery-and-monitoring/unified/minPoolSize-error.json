@@ -3,7 +3,7 @@
   "schemaVersion": "1.4",
   "runOnRequirements": [
     {
-      "minServerVersion": "4.9",
+      "minServerVersion": "4.4.7",
       "serverless": "forbid",
       "topologies": [
         "single"

@@ -262,8 +262,7 @@ func (i *IndexOptionsBuilder) SetSparse(sparse bool) *IndexOptionsBuilder {
 // SetStorageEngine sets the value for the StorageEngine field. Specifies the
 // storage engine to use for the index. The value must be a document in the form
 // {<storage engine name>: <options>}. The default value is nil, which means that
-// the default storage engine will be used. This option is only applicable for
-// MongoDB versions >= 3.0 and is ignored for previous server versions.
+// the default storage engine will be used.
 func (i *IndexOptionsBuilder) SetStorageEngine(engine interface{}) *IndexOptionsBuilder {
 	i.Opts = append(i.Opts, func(opts *IndexOptions) error {
 		opts.StorageEngine = engine
@@ -424,8 +423,7 @@ func (i *IndexOptionsBuilder) SetBucketSize(bucketSize int32) *IndexOptionsBuild
 }
 
 // SetPartialFilterExpression sets the value for the PartialFilterExpression field. Sets
-// a document that defines which collection documents the index should reference. This
-// option is only valid for MongoDB versions >= 3.2 and is ignored for previous server versions.
+// a document that defines which collection documents the index should reference.
 func (i *IndexOptionsBuilder) SetPartialFilterExpression(expression interface{}) *IndexOptionsBuilder {
 	i.Opts = append(i.Opts, func(opts *IndexOptions) error {
 		opts.PartialFilterExpression = expression
@@ -437,8 +435,7 @@ func (i *IndexOptionsBuilder) SetPartialFilterExpression(expression interface{})
 }
 
 // SetCollation sets the value for the Collation field. Specifies the collation to use for
-// string comparisons for the index. This option is only valid for MongoDB versions >= 3.4.
-// For previous server versions, the driver will return an error if this option is used.
+// string comparisons for the index.
 func (i *IndexOptionsBuilder) SetCollation(collation *Collation) *IndexOptionsBuilder {
 	i.Opts = append(i.Opts, func(opts *IndexOptions) error {
 		opts.Collation = collation

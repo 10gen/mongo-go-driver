@@ -57,10 +57,9 @@ func (cso *ChangeStreamOptionsBuilder) SetBatchSize(i int32) *ChangeStreamOption
 	return cso
 }
 
-// SetCollation sets the value for the Collation field. Specifies a collation to use for string comparisons
-// during the operation. This option is only valid for MongoDB versions >= 3.4. For previous server versions,
-// the driver will return an error if this option is used. The default value is nil, which means the default
-// collation of the collection will be used.
+// SetCollation sets the value for the Collation field. Specifies a collation to
+// use for string comparisons during the operation. The default value is nil,
+// which means the default collation of the collection will be used.
 func (cso *ChangeStreamOptionsBuilder) SetCollation(c Collation) *ChangeStreamOptionsBuilder {
 	cso.Opts = append(cso.Opts, func(opts *ChangeStreamOptions) error {
 		opts.Collation = &c

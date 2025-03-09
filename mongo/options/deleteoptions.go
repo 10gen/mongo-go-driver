@@ -34,11 +34,9 @@ func (do *DeleteOneOptionsBuilder) List() []func(*DeleteOneOptions) error {
 	return do.Opts
 }
 
-// SetCollation sets the value for the Collation field. Specifies a collation to use for
-// string comparisons during the operation. This option is only valid for MongoDB
-// versions >= 3.4. For previous server versions, the driver will return an error if this
-// option is used. The default value is nil, which means the default collation of the
-// collection will be used.
+// SetCollation sets the value for the Collation field. Specifies a collation to
+// use for string comparisons during the operation. The default value is nil,
+// which means the default collation of the collection will be used.
 func (do *DeleteOneOptionsBuilder) SetCollation(c *Collation) *DeleteOneOptionsBuilder {
 	do.Opts = append(do.Opts, func(opts *DeleteOneOptions) error {
 		opts.Collation = c
@@ -62,13 +60,14 @@ func (do *DeleteOneOptionsBuilder) SetComment(comment interface{}) *DeleteOneOpt
 	return do
 }
 
-// SetHint sets the value for the Hint field. Specifies the index to use for the operation. This
-// should either be the index name as a string or the index specification as a document. This option
-// is only valid for MongoDB versions >= 4.4. Server versions >= 3.4 will return an error if this
-// option is specified. For server versions < 3.4, the driver will return a client-side error if this
-// option is specified. The driver will return an error if this option is specified during an
-// unacknowledged write operation. The driver will return an error if the hint parameter is a
-// multi-key map. The default value is nil, which means that no hint will be sent.
+// SetHint sets the value for the Hint field. Specifies the index to use for the
+// operation. This should either be the index name as a string or the index
+// specification as a document. This option is only valid for MongoDB versions
+// >= 4.4. Server versions < 4.4 will return an error if this option is
+// specified. The driver will return an error if this option is specified during
+// an unacknowledged write operation. The driver will return an error if the
+// hint parameter is a multi-key map. The default value is nil, which means that
+// no hint will be sent.
 func (do *DeleteOneOptionsBuilder) SetHint(hint interface{}) *DeleteOneOptionsBuilder {
 	do.Opts = append(do.Opts, func(opts *DeleteOneOptions) error {
 		opts.Hint = hint
@@ -122,10 +121,9 @@ func (do *DeleteManyOptionsBuilder) List() []func(*DeleteManyOptions) error {
 	return do.Opts
 }
 
-// SetCollation sets the value for the Collation field. Specifies a collation to use for string
-// comparisons during the operation. This option is only valid for MongoDB versions >= 3.4.
-// For previous server versions, the driver will return an error if this option is used. The
-// default value is nil, which means the default collation of the collection will be used.
+// SetCollation sets the value for the Collation field. Specifies a collation to
+// use for string comparisons during the operation. The default value is nil,
+// which means the default collation of the collection will be used.
 func (do *DeleteManyOptionsBuilder) SetCollation(c *Collation) *DeleteManyOptionsBuilder {
 	do.Opts = append(do.Opts, func(opts *DeleteManyOptions) error {
 		opts.Collation = c
@@ -149,14 +147,14 @@ func (do *DeleteManyOptionsBuilder) SetComment(comment interface{}) *DeleteManyO
 	return do
 }
 
-// SetHint sets the value for the Hint field. Specifies the index to use for the operation.
-// This should either be the index name as a string or the index specification as a document.
-// This option is only valid for MongoDB versions >= 4.4. Server versions >= 3.4 will return an
-// error if this option is specified. For server versions < 3.4, the driver will return a
-// client-side error if this option is specified. The driver will return an error if this option
-// is specified during an unacknowledged write operation. The driver will return an error if the
-// hint parameter is a multi-key map. The default value is nil, which means that no hint will
-// be sent.
+// SetHint sets the value for the Hint field. Specifies the index to use for the
+// operation. This should either be the index name as a string or the index
+// specification as a document. This option is only valid for MongoDB versions
+// >= 4.4. Server versions < 4.4 will return an error if this option is
+// specified. The driver will return an error if this option is specified during
+// an unacknowledged write operation. The driver will return an error if the
+// hint parameter is a multi-key map. The default value is nil, which means that
+// no hint will be sent.
 func (do *DeleteManyOptionsBuilder) SetHint(hint interface{}) *DeleteManyOptionsBuilder {
 	do.Opts = append(do.Opts, func(opts *DeleteManyOptions) error {
 		opts.Hint = hint
