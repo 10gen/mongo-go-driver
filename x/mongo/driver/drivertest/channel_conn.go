@@ -13,6 +13,7 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo/address"
 	"go.mongodb.org/mongo-driver/v2/x/bsonx/bsoncore"
 	"go.mongodb.org/mongo-driver/v2/x/mongo/driver/description"
+	"go.mongodb.org/mongo-driver/v2/x/mongo/driver/mnet"
 	"go.mongodb.org/mongo-driver/v2/x/mongo/driver/wiremessage"
 )
 
@@ -52,7 +53,7 @@ func (c *ChannelConn) Write(ctx context.Context, wm []byte) error {
 }
 
 // ReadWireMessage implements the driver.Connection interface.
-func (c *ChannelConn) Read(ctx context.Context) ([]byte, error) {
+func (c *ChannelConn) Read(ctx context.Context, _ ...mnet.ReadOption) ([]byte, error) {
 	var wm []byte
 	var err error
 	select {

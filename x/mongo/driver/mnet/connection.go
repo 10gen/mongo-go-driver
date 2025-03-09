@@ -14,10 +14,29 @@ import (
 	"go.mongodb.org/mongo-driver/v2/x/mongo/driver/description"
 )
 
+type ReadOption func(*ReadOptions)
+
+type ReadOptions struct {
+	HasMaxTimeMS bool
+	RequestID    int32
+}
+
+func WithReadMaxTimeMS() ReadOption {
+	return func(opts *ReadOptions) {
+		opts.HasMaxTimeMS = true
+	}
+}
+
+func WithRequestID(requestID int32) ReadOption {
+	return func(opts *ReadOptions) {
+		opts.RequestID = requestID
+	}
+}
+
 // ReadWriteCloser represents a Connection where server operations
 // can read from, written to, and closed.
 type ReadWriteCloser interface {
-	Read(ctx context.Context) ([]byte, error)
+	Read(ctx context.Context, opts ...ReadOption) ([]byte, error)
 	Write(ctx context.Context, wm []byte) error
 	io.Closer
 }

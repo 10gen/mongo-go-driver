@@ -75,17 +75,21 @@ const (
 
 // strings for pool command monitoring types
 const (
-	ConnectionPoolCreated     = "ConnectionPoolCreated"
-	ConnectionPoolReady       = "ConnectionPoolReady"
-	ConnectionPoolCleared     = "ConnectionPoolCleared"
-	ConnectionPoolClosed      = "ConnectionPoolClosed"
-	ConnectionCreated         = "ConnectionCreated"
-	ConnectionReady           = "ConnectionReady"
-	ConnectionClosed          = "ConnectionClosed"
-	ConnectionCheckOutStarted = "ConnectionCheckOutStarted"
-	ConnectionCheckOutFailed  = "ConnectionCheckOutFailed"
-	ConnectionCheckedOut      = "ConnectionCheckedOut"
-	ConnectionCheckedIn       = "ConnectionCheckedIn"
+	ConnectionPoolCreated          = "ConnectionPoolCreated"
+	ConnectionPoolReady            = "ConnectionPoolReady"
+	ConnectionPoolCleared          = "ConnectionPoolCleared"
+	ConnectionPoolClosed           = "ConnectionPoolClosed"
+	ConnectionCreated              = "ConnectionCreated"
+	ConnectionReady                = "ConnectionReady"
+	ConnectionClosed               = "ConnectionClosed"
+	ConnectionCheckOutStarted      = "ConnectionCheckOutStarted"
+	ConnectionCheckOutFailed       = "ConnectionCheckOutFailed"
+	ConnectionCheckedOut           = "ConnectionCheckedOut"
+	ConnectionCheckedIn            = "ConnectionCheckedIn"
+	ConnectionPendingReadStarted   = "ConnectionPendingReadStarted"
+	ConnectionPendingReadSucceeded = "ConnectionPendingReadSucceeded"
+	ConnectionPendingReadFailed    = "ConnectionPendingReadFailed"
+	ConnectionPendingReadDuration  = "ConnectionPendingReadDuration"
 )
 
 // MonitorPoolOptions contains pool options as formatted in pool events
@@ -105,9 +109,11 @@ type PoolEvent struct {
 	Reason       string              `json:"reason"`
 	// ServiceID is only set if the Type is PoolCleared and the server is deployed behind a load balancer. This field
 	// can be used to distinguish between individual servers in a load balanced deployment.
-	ServiceID    *bson.ObjectID `json:"serviceId"`
-	Interruption bool           `json:"interruptInUseConnections"`
-	Error        error          `json:"error"`
+	ServiceID     *bson.ObjectID `json:"serviceId"`
+	Interruption  bool           `json:"interruptInUseConnections"`
+	Error         error          `json:"error"`
+	RequestID     int32          `json:"requestId"`
+	RemainingTime time.Duration  `json:"remainingTime"`
 }
 
 // PoolMonitor is a function that allows the user to gain access to events occurring in the pool

@@ -1,0 +1,312 @@
+description: "Operation timeouts do not cause connection churn"
+
+schemaVersion: "1.9"
+
+runOnRequirements:
+  - minServerVersion: "4.4"
+    # TODO(SERVER-96344): When using failpoints, mongos returns MaxTimeMSExpired 
+    # after maxTimeMS, whereas mongod returns it after 
+    # max(blockTimeMS, maxTimeMS).  Until this ticket is resolved, these tests 
+    # will not pass on sharded clusters.
+    topologies: ["standalone", "replicaset"]
+
+createEntities:
+  - client:
+      id: &failPointClient failPointClient
+      useMultipleMongoses: false
+  - client:
+      id: &client client
+      uriOptions:
+        maxPoolSize: 1
+      useMultipleMongoses: false
+      observeEvents:
+        - commandFailedEvent
+        - commandSucceededEvent
+        - connectionCheckedOutEvent
+        - connectionCheckedInEvent
+        - connectionClosedEvent
+  - database:
+      id: &database test
+      client: *client
+      databaseName: *database
+  - collection:
+      id: &collection coll
+      database: *database
+      collectionName: *collection
+
+initialData:
+  - collectionName: *collection
+    databaseName: *database
+    documents: []
+
+tests:
+  - description: "Write operation with successful pending read"
+    operations:
+      # Create a failpoint to block the first operation
+      - name: failPoint
+        object: testRunner
+        arguments:
+          client: *failPointClient
+          failPoint:
+            configureFailPoint: failCommand
+            mode: { times: 1 }
+            data:
+              failCommands: ["insert"]
+              blockConnection: true
+              blockTimeMS: 750
+
+      # Execute operation with timeout less than block time
+      - name: insertOne
+        object: *collection
+        arguments:
+          timeoutMS: 50
+          document: { _id: 3, x: 1 }
+        expectError:
+          isTimeoutError: true
+
+      # Execute a subsequent operation to complete the read
+      - name: findOne
+        object: *collection
+        arguments:
+          filter: { _id: 1 }
+
+    expectEvents:
+      - client: *client
+        events:
+          - commandFailedEvent:
+              commandName: insert
+          - commandSucceededEvent:
+              commandName: find
+      - client: *client
+        eventType: cmap
+        events:
+          - connectionCheckedOutEvent: {} # insert
+          - connectionCheckedInEvent: {}  # insert fails
+          - connectionCheckedOutEvent: {} # find
+          - connectionCheckedInEvent: {}  # find succeeds
+
+  - description: "Concurrent write operation with successful pending read"
+    operations:
+      # Create a failpoint to block the first operation
+      - name: failPoint
+        object: testRunner
+        arguments:
+          client: *failPointClient
+          failPoint:
+            configureFailPoint: failCommand
+            mode: { times: 1 }
+            data:
+              failCommands: ["insert"]
+              blockConnection: true
+              blockTimeMS: 750
+
+      # Start threads.
+      - name: createEntities
+        object: testRunner
+        arguments:
+          entities:
+            - thread:
+                id: &thread0 thread0
+            - thread:
+                id: &thread1 thread1
+
+      # Run an insert in two threads. We expect the first to time out and the 
+      # second to finish the pending read from the first and complete 
+      # successfully.
+      - name: runOnThread
+        object: testRunner
+        arguments:
+          thread: *thread0
+          operation:
+            name: insertOne
+            object: *collection
+            arguments:
+              timeoutMS: 500
+              document:
+                _id: 2
+          expectError:
+            isTimeoutError: true
+
+      # Ensure the first thread checks out a connection before executing the 
+      # operation in the second thread. This maintains concurrent behavior but 
+      # presents the worst case scenario.
+      - name: waitForEvent
+        object: testRunner
+        arguments:
+          client: *client
+          event:
+            connectionCheckedOutEvent: {}
+          count: 1
+
+      - name: runOnThread
+        object: testRunner
+        arguments:
+          thread: *thread1
+          operation:
+            name: insertOne
+            object: *collection
+            arguments:
+              document:
+                _id: 3
+
+      # Stop threads.
+      - name: waitForThread
+        object: testRunner
+        arguments:
+          thread: *thread1
+
+    expectEvents:
+      - client: *client
+        events:
+          - commandFailedEvent:
+              commandName: insert
+          - commandSucceededEvent:
+              commandName: insert
+      - client: *client
+        eventType: cmap
+        events:
+          - connectionCheckedOutEvent: {} # insert
+          - connectionCheckedInEvent: {}  # insert fails
+          - connectionCheckedOutEvent: {} # find
+          - connectionCheckedInEvent: {}  # find succeeds
+
+  - description: "Write operation with unsuccessful pending read"
+    operations:
+      # Create a failpoint to block the first operation
+      - name: failPoint
+        object: testRunner
+        arguments:
+          client: *failPointClient
+          failPoint:
+            configureFailPoint: failCommand
+            mode: { times: 1 }
+            data:
+              failCommands: ["insert"]
+              blockConnection: true
+              blockTimeMS: 1100
+
+      # Execute operation with timeout less than block time
+      - name: insertOne
+        object: *collection
+        arguments:
+          timeoutMS: 50
+          document: { _id: 3, x: 1 }
+        expectError:
+          isTimeoutError: true
+
+      # The pending read should fail
+      - name: insertOne
+        object: *collection
+        arguments:
+          timeoutMS: 1000
+          document: { _id: 3, x: 1 }
+        expectError:
+          isTimeoutError: true
+
+    expectEvents:
+      - client: *client
+        events:
+          - commandFailedEvent:
+              commandName: insert
+          # No second failed event since we timed out attempting to check out 
+          # the connection for the second operation
+      - client: *client
+        eventType: cmap
+        events:
+          - connectionCheckedOutEvent: {} # first insert
+          - connectionCheckedInEvent: {}  # first insert fails
+          - connectionClosedEvent:        # second insert times out pending read in checkout, closes
+              reason: error
+
+  - description: "Read operation with successful pending read"
+    operations:
+      # Create a failpoint to block the first operation
+      - name: failPoint
+        object: testRunner
+        arguments:
+          client: *failPointClient
+          failPoint:
+            configureFailPoint: failCommand
+            mode: { times: 1 }
+            data:
+              failCommands: ["find"]
+              blockConnection: true
+              blockTimeMS: 750
+
+      # Execute operation with timeout less than block time
+      - name: findOne
+        object: *collection
+        arguments:
+          timeoutMS: 50
+          filter: { _id: 1 }
+        expectError:
+          isTimeoutError: true
+
+      # Execute a subsequent operation to complete the read
+      - name: findOne
+        object: *collection
+        arguments:
+          filter: { _id: 1 }
+
+    expectEvents:
+      - client: *client
+        events:
+          - commandFailedEvent:
+              commandName: find
+          - commandSucceededEvent:
+              commandName: find
+      - client: *client
+        eventType: cmap
+        events:
+          - connectionCheckedOutEvent: {} # first find
+          - connectionCheckedInEvent: {}  # first find fails
+          - connectionCheckedOutEvent: {} # second find
+          - connectionCheckedInEvent: {}  # second find succeeds
+
+  - description: "Read operation with unsuccessful pending read"
+    operations:
+      # Create a failpoint to block the first operation
+      - name: failPoint
+        object: testRunner
+        arguments:
+          client: *failPointClient
+          failPoint:
+            configureFailPoint: failCommand
+            mode: { times: 1 }
+            data:
+              failCommands: ["find"]
+              blockConnection: true
+              blockTimeMS: 1100
+
+      # Execute operation with timeout less than block time
+      - name: findOne
+        object: *collection
+        arguments:
+          timeoutMS: 50
+          filter: { _id: 1 }
+        expectError:
+          isTimeoutError: true
+
+      # The pending read should fail
+      - name: findOne
+        object: *collection
+        arguments:
+          timeoutMS: 1000
+          filter: { _id: 1 }
+        expectError:
+          isTimeoutError: true
+
+    expectEvents:
+      - client: *client
+        events:
+          - commandFailedEvent:
+              commandName: find
+          # No second failed event since we timed out attempting to check out 
+          # the connection for the second operation
+      - client: *client
+        eventType: cmap
+        events:
+          - connectionCheckedOutEvent: {} # first find
+          - connectionCheckedInEvent: {}  # first find fails
+          - connectionClosedEvent:        # second find times out pending read in checkout, closes
+              reason: error

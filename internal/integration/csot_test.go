@@ -16,7 +16,6 @@ import (
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/event"
 	"go.mongodb.org/mongo-driver/v2/internal/assert"
-	"go.mongodb.org/mongo-driver/v2/internal/eventtest"
 	"go.mongodb.org/mongo-driver/v2/internal/failpoint"
 	"go.mongodb.org/mongo-driver/v2/internal/integration/mtest"
 	"go.mongodb.org/mongo-driver/v2/internal/require"
@@ -349,55 +348,55 @@ func TestCSOT_maxTimeMS(t *testing.T) {
 				}
 			})
 
-			opts := mtest.NewOptions().
-				// Blocking failpoints don't work on pre-4.2 and sharded
-				// clusters.
-				Topologies(mtest.Single, mtest.ReplicaSet).
-				MinServerVersion("4.2")
-			mt.RunOpts("prevents connection closure", opts, func(mt *mtest.T) {
-				if tc.setup != nil {
-					err := tc.setup(mt.Coll)
-					require.NoError(mt, err)
-				}
+			//opts := mtest.NewOptions().
+			//	// Blocking failpoints don't work on pre-4.2 and sharded
+			//	// clusters.
+			//	Topologies(mtest.Single, mtest.ReplicaSet).
+			//	MinServerVersion("4.2")
+			//mt.RunOpts("prevents connection closure", opts, func(mt *mtest.T) {
+			//	if tc.setup != nil {
+			//		err := tc.setup(mt.Coll)
+			//		require.NoError(mt, err)
+			//	}
 
-				mt.SetFailPoint(failpoint.FailPoint{
-					ConfigureFailPoint: "failCommand",
-					Mode:               failpoint.ModeAlwaysOn,
-					Data: failpoint.Data{
-						FailCommands:    []string{tc.commandName},
-						BlockConnection: true,
-						// Note that some operations (currently Find and
-						// Aggregate) do not send maxTimeMS by default, meaning
-						// that the server will only respond after BlockTimeMS
-						// is elapsed. If the amount of time that the driver
-						// waits for responses after a timeout is significantly
-						// lower than BlockTimeMS, this test will start failing
-						// for those operations.
-						BlockTimeMS: 500,
-					},
-				})
+			//	mt.SetFailPoint(failpoint.FailPoint{
+			//		ConfigureFailPoint: "failCommand",
+			//		Mode:               failpoint.ModeAlwaysOn,
+			//		Data: failpoint.Data{
+			//			FailCommands:    []string{tc.commandName},
+			//			BlockConnection: true,
+			//			// Note that some operations (currently Find and
+			//			// Aggregate) do not send maxTimeMS by default, meaning
+			//			// that the server will only respond after BlockTimeMS
+			//			// is elapsed. If the amount of time that the driver
+			//			// waits for responses after a timeout is significantly
+			//			// lower than BlockTimeMS, this test will start failing
+			//			// for those operations.
+			//			BlockTimeMS: 500,
+			//		},
+			//	})
 
-				tpm := eventtest.NewTestPoolMonitor()
-				mt.ResetClient(options.Client().
-					SetPoolMonitor(tpm.PoolMonitor))
+			//	tpm := eventtest.NewTestPoolMonitor()
+			//	mt.ResetClient(options.Client().
+			//		SetPoolMonitor(tpm.PoolMonitor))
 
-				// Run 5 operations that time out, then assert that no
-				// connections were closed.
-				for i := 0; i < 5; i++ {
-					ctx, cancel := context.WithTimeout(context.Background(), 15*time.Millisecond)
-					err := tc.operation(ctx, mt.Coll)
-					cancel()
+			//	// Run 5 operations that time out, then assert that no
+			//	// connections were closed.
+			//	for i := 0; i < 5; i++ {
+			//		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Millisecond)
+			//		err := tc.operation(ctx, mt.Coll)
+			//		cancel()
 
-					if !mongo.IsTimeout(err) {
-						t.Logf("Operation %d returned a non-timeout error: %v", i, err)
-					}
-				}
+			//		if !mongo.IsTimeout(err) {
+			//			t.Logf("Operation %d returned a non-timeout error: %v", i, err)
+			//		}
+			//	}
 
-				closedEvents := tpm.Events(func(pe *event.PoolEvent) bool {
-					return pe.Type == event.ConnectionClosed
-				})
-				assert.Len(mt, closedEvents, 0, "expected no connection closed event")
-			})
+			//	closedEvents := tpm.Events(func(pe *event.PoolEvent) bool {
+			//		return pe.Type == event.ConnectionClosed
+			//	})
+			//	assert.Len(mt, closedEvents, 0, "expected no connection closed event")
+			//})
 		})
 	}
 

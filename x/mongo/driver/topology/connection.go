@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"go.mongodb.org/mongo-driver/v2/internal/driverutil"
+	"go.mongodb.org/mongo-driver/v2/internal/ptrutil"
 	"go.mongodb.org/mongo-driver/v2/mongo/address"
 	"go.mongodb.org/mongo-driver/v2/x/bsonx/bsoncore"
 	"go.mongodb.org/mongo-driver/v2/x/mongo/driver"
@@ -85,6 +86,9 @@ type connection struct {
 	// awaitRemainingBytes indicates the size of server response that was not completely
 	// read before returning the connection to the pool.
 	awaitRemainingBytes *int32
+	requestID           int32
+	remainingTime       *time.Duration
+	pendingReadMU       sync.Mutex
 }
 
 // newConnection handles the creation of a connection. It does not connect the connection.
@@ -102,6 +106,7 @@ func newConnection(addr address.Address, opts ...ConnectionOption) *connection {
 		connectContextMade:   make(chan struct{}),
 		cancellationListener: newContextDoneListener(),
 		connectListener:      newNonBlockingContextDoneListener(),
+		pendingReadMU:        sync.Mutex{},
 	}
 	// Connections to non-load balanced deployments should eagerly set the generation numbers so errors encountered
 	// at any point during connection establishment can be processed without the connection being considered stale.
@@ -392,7 +397,7 @@ func (c *connection) write(ctx context.Context, wm []byte) (err error) {
 }
 
 // readWireMessage reads a wiremessage from the connection. The dst parameter will be overwritten.
-func (c *connection) readWireMessage(ctx context.Context) ([]byte, error) {
+func (c *connection) readWireMessage(ctx context.Context, opts ...mnet.ReadOption) ([]byte, error) {
 	if atomic.LoadInt64(&c.state) != connConnected {
 		return nil, ConnectionError{
 			ConnectionID: c.id,
@@ -405,13 +410,15 @@ func (c *connection) readWireMessage(ctx context.Context) ([]byte, error) {
 		return nil, ConnectionError{ConnectionID: c.id, Wrapped: err, message: "failed to set read deadline"}
 	}
 
-	dst, errMsg, err := c.read(ctx)
+	dst, errMsg, err := c.read(ctx, opts...)
 	if err != nil {
+		c.pendingReadMU.Lock()
 		if c.awaitRemainingBytes == nil {
 			// If the connection was not marked as awaiting response, close the
 			// connection because we don't know what the connection state is.
 			c.close()
 		}
+		c.pendingReadMU.Unlock()
 		message := errMsg
 		if errors.Is(err, io.EOF) {
 			message = "socket was unexpectedly closed"
@@ -446,7 +453,7 @@ func (c *connection) parseWmSizeBytes(wmSizeBytes [4]byte) (int32, error) {
 	return size, nil
 }
 
-func (c *connection) read(ctx context.Context) (bytesRead []byte, errMsg string, err error) {
+func (c *connection) read(ctx context.Context, opts ...mnet.ReadOption) (bytesRead []byte, errMsg string, err error) {
 	go c.cancellationListener.Listen(ctx, c.cancellationListenerCallback)
 	defer func() {
 		// If the context is cancelled after we finish reading the server response, the cancellation listener could fire
@@ -458,6 +465,11 @@ func (c *connection) read(ctx context.Context) (bytesRead []byte, errMsg string,
 			err = context.Canceled
 		}
 	}()
+
+	readOpts := mnet.ReadOptions{}
+	for _, opt := range opts {
+		opt(&readOpts)
+	}
 
 	isCSOTTimeout := func(err error) bool {
 		// If the error was a timeout error, instead of closing the
@@ -476,8 +488,12 @@ func (c *connection) read(ctx context.Context) (bytesRead []byte, errMsg string,
 	// reading messages from an exhaust cursor.
 	n, err := io.ReadFull(c.nc, sizeBuf[:])
 	if err != nil {
-		if l := int32(n); l == 0 && isCSOTTimeout(err) {
+		if l := int32(n); l == 0 && isCSOTTimeout(err) && readOpts.HasMaxTimeMS {
+			c.pendingReadMU.Lock()
 			c.awaitRemainingBytes = &l
+			c.requestID = readOpts.RequestID
+			c.remainingTime = ptrutil.Ptr(PendingReadTimeout)
+			c.pendingReadMU.Unlock()
 		}
 		return nil, "incomplete read of message header", err
 	}
@@ -492,8 +508,12 @@ func (c *connection) read(ctx context.Context) (bytesRead []byte, errMsg string,
 	n, err = io.ReadFull(c.nc, dst[4:])
 	if err != nil {
 		remainingBytes := size - 4 - int32(n)
-		if remainingBytes > 0 && isCSOTTimeout(err) {
+		if remainingBytes > 0 && isCSOTTimeout(err) && readOpts.HasMaxTimeMS {
+			c.pendingReadMU.Lock()
 			c.awaitRemainingBytes = &remainingBytes
+			c.requestID = readOpts.RequestID
+			c.remainingTime = ptrutil.Ptr(PendingReadTimeout)
+			c.pendingReadMU.Unlock()
 		}
 		return dst, "incomplete read of full message", err
 	}
@@ -652,8 +672,8 @@ func (c initConnection) LocalAddress() address.Address {
 func (c initConnection) Write(ctx context.Context, wm []byte) error {
 	return c.writeWireMessage(ctx, wm)
 }
-func (c initConnection) Read(ctx context.Context) ([]byte, error) {
-	return c.readWireMessage(ctx)
+func (c initConnection) Read(ctx context.Context, opts ...mnet.ReadOption) ([]byte, error) {
+	return c.readWireMessage(ctx, opts...)
 }
 func (c initConnection) SetStreaming(streaming bool) {
 	c.setStreaming(streaming)
@@ -700,13 +720,13 @@ func (c *Connection) Write(ctx context.Context, wm []byte) error {
 
 // ReadWireMessage handles reading a wire message from the underlying connection. The dst parameter
 // will be overwritten with the new wire message.
-func (c *Connection) Read(ctx context.Context) ([]byte, error) {
+func (c *Connection) Read(ctx context.Context, opts ...mnet.ReadOption) ([]byte, error) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 	if c.connection == nil {
 		return nil, ErrConnectionClosed
 	}
-	return c.connection.readWireMessage(ctx)
+	return c.connection.readWireMessage(ctx, opts...)
 }
 
 // CompressWireMessage handles compressing the provided wire message using the underlying

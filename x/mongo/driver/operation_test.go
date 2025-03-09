@@ -793,7 +793,7 @@ func (m *mockConnection) Write(_ context.Context, wm []byte) error {
 	return m.rWriteErr
 }
 
-func (m *mockConnection) Read(_ context.Context) ([]byte, error) {
+func (m *mockConnection) Read(_ context.Context, _ ...mnet.ReadOption) ([]byte, error) {
 	return m.rReadWM, m.rReadErr
 }
 

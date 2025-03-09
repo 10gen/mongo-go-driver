@@ -68,7 +68,7 @@ func (c *connection) SetOIDCTokenGenID(uint64) {
 }
 
 // Read returns the next response in the connection's list of responses.
-func (c *connection) Read(_ context.Context) ([]byte, error) {
+func (c *connection) Read(_ context.Context, _ ...mnet.ReadOption) ([]byte, error) {
 	var dst []byte
 	if len(c.responses) == 0 {
 		return dst, errors.New("no responses remaining")

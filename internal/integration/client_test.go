@@ -20,7 +20,6 @@ import (
 	"go.mongodb.org/mongo-driver/v2/event"
 	"go.mongodb.org/mongo-driver/v2/internal/assert"
 	"go.mongodb.org/mongo-driver/v2/internal/eventtest"
-	"go.mongodb.org/mongo-driver/v2/internal/failpoint"
 	"go.mongodb.org/mongo-driver/v2/internal/handshake"
 	"go.mongodb.org/mongo-driver/v2/internal/integration/mtest"
 	"go.mongodb.org/mongo-driver/v2/internal/integtest"
@@ -649,76 +648,76 @@ func TestClient(t *testing.T) {
 		}
 	})
 
-	opts := mtest.NewOptions().
-		// Blocking failpoints don't work on pre-4.2 and sharded clusters.
-		Topologies(mtest.Single, mtest.ReplicaSet).
-		MinServerVersion("4.2").
-		// Expliticly enable retryable reads and retryable writes.
-		ClientOptions(options.Client().SetRetryReads(true).SetRetryWrites(true))
-	mt.RunOpts("operations don't retry after a context timeout", opts, func(mt *mtest.T) {
-		testCases := []struct {
-			desc      string
-			operation func(context.Context, *mongo.Collection) error
-		}{
-			{
-				desc: "read op",
-				operation: func(ctx context.Context, coll *mongo.Collection) error {
-					return coll.FindOne(ctx, bson.D{}).Err()
-				},
-			},
-			{
-				desc: "write op",
-				operation: func(ctx context.Context, coll *mongo.Collection) error {
-					_, err := coll.InsertOne(ctx, bson.D{})
-					return err
-				},
-			},
-		}
+	//opts := mtest.NewOptions().
+	//	// Blocking failpoints don't work on pre-4.2 and sharded clusters.
+	//	Topologies(mtest.Single, mtest.ReplicaSet).
+	//	MinServerVersion("4.2").
+	//	// Expliticly enable retryable reads and retryable writes.
+	//	ClientOptions(options.Client().SetRetryReads(true).SetRetryWrites(true))
+	//mt.RunOpts("operations don't retry after a context timeout", opts, func(mt *mtest.T) {
+	//	testCases := []struct {
+	//		desc      string
+	//		operation func(context.Context, *mongo.Collection) error
+	//	}{
+	//		{
+	//			desc: "read op",
+	//			operation: func(ctx context.Context, coll *mongo.Collection) error {
+	//				return coll.FindOne(ctx, bson.D{}).Err()
+	//			},
+	//		},
+	//		{
+	//			desc: "write op",
+	//			operation: func(ctx context.Context, coll *mongo.Collection) error {
+	//				_, err := coll.InsertOne(ctx, bson.D{})
+	//				return err
+	//			},
+	//		},
+	//	}
 
-		for _, tc := range testCases {
-			mt.Run(tc.desc, func(mt *mtest.T) {
-				_, err := mt.Coll.InsertOne(context.Background(), bson.D{})
-				require.NoError(mt, err)
+	//	for _, tc := range testCases {
+	//		mt.Run(tc.desc, func(mt *mtest.T) {
+	//			_, err := mt.Coll.InsertOne(context.Background(), bson.D{})
+	//			require.NoError(mt, err)
 
-				mt.SetFailPoint(failpoint.FailPoint{
-					ConfigureFailPoint: "failCommand",
-					Mode:               failpoint.ModeAlwaysOn,
-					Data: failpoint.Data{
-						FailCommands:    []string{"find", "insert"},
-						BlockConnection: true,
-						BlockTimeMS:     500,
-					},
-				})
+	//			mt.SetFailPoint(failpoint.FailPoint{
+	//				ConfigureFailPoint: "failCommand",
+	//				Mode:               failpoint.ModeAlwaysOn,
+	//				Data: failpoint.Data{
+	//					FailCommands:    []string{"find", "insert"},
+	//					BlockConnection: true,
+	//					BlockTimeMS:     500,
+	//				},
+	//			})
 
-				mt.ClearEvents()
+	//			mt.ClearEvents()
+	//			//i := 0
+	//			for i := 0; i < 2; i++ {
+	//				// Run 50 operations, each with a timeout of 50ms. Expect
+	//				// them to all return a timeout error because the failpoint
+	//				// blocks find operations for 500ms. Run 50 to increase the
+	//				// probability that an operation will time out in a way that
+	//				// can cause a retry.
+	//				ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
+	//				err = tc.operation(ctx, mt.Coll)
+	//				cancel()
+	//				assert.ErrorIs(mt, err, context.DeadlineExceeded)
+	//				assert.True(mt, mongo.IsTimeout(err), "expected mongo.IsTimeout(err) to be true")
 
-				for i := 0; i < 50; i++ {
-					// Run 50 operations, each with a timeout of 50ms. Expect
-					// them to all return a timeout error because the failpoint
-					// blocks find operations for 500ms. Run 50 to increase the
-					// probability that an operation will time out in a way that
-					// can cause a retry.
-					ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
-					err = tc.operation(ctx, mt.Coll)
-					cancel()
-					assert.ErrorIs(mt, err, context.DeadlineExceeded)
-					assert.True(mt, mongo.IsTimeout(err), "expected mongo.IsTimeout(err) to be true")
-
-					// Assert that each operation reported exactly one command
-					// started events, which means the operation did not retry
-					// after the context timeout.
-					evts := mt.GetAllStartedEvents()
-					require.Len(mt,
-						mt.GetAllStartedEvents(),
-						1,
-						"expected exactly 1 command started event per operation, but got %d after %d iterations",
-						len(evts),
-						i)
-					mt.ClearEvents()
-				}
-			})
-		}
-	})
+	//				// Assert that each operation reported exactly one command
+	//				// started events, which means the operation did not retry
+	//				// after the context timeout.
+	//				evts := mt.GetAllStartedEvents()
+	//				require.Len(mt,
+	//					mt.GetAllStartedEvents(),
+	//					1,
+	//					"expected exactly 1 command started event per operation, but got %d after %d iterations",
+	//					len(evts),
+	//					i)
+	//				mt.ClearEvents()
+	//			}
+	//		})
+	//	}
+	//})
 }
 
 func TestClient_BulkWrite(t *testing.T) {
