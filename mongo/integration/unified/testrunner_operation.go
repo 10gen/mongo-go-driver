@@ -222,6 +222,41 @@ func executeTestRunnerOperation(ctx context.Context, op *operation, loopDone <-c
 		defer cancel()
 
 		return waitForEvent(wfeCtx, wfeArgs)
+	case "wait":
+		timeMs := lookupInteger(args, "ms")
+
+		dur := time.Duration(timeMs) * time.Millisecond
+		time.Sleep(dur)
+
+		return nil
+	case "assertEventCount":
+		// args: client, event, count
+		var wfeArgs waitForEventArguments
+		if err := bson.Unmarshal(op.Arguments, &wfeArgs); err != nil {
+			return fmt.Errorf("error unmarshalling event to waitForEventArguments: %v", err)
+		}
+
+		client, err := entities(ctx).client(wfeArgs.ClientID)
+		if err != nil {
+			return err
+		}
+
+		for rawEventType, eventDoc := range wfeArgs.Event {
+			eventType, _ := monitoringEventTypeFromString(rawEventType)
+
+			switch eventType {
+			case serverDescriptionChangedEvent:
+				if got := getServerDescriptionChangedEventCount(client, eventDoc); got != wfeArgs.Count {
+					return fmt.Errorf("failed to assert count. want: %v, got: %v", wfeArgs.Count, got)
+				}
+			default:
+				if got := client.getEventCount(eventType); got != wfeArgs.Count {
+					return fmt.Errorf("failed to assert count. want: %v, got: %v", wfeArgs.Count, got)
+				}
+			}
+		}
+
+		return nil
 	default:
 		return fmt.Errorf("unrecognized testRunner operation %q", op.Name)
 	}
