@@ -18,6 +18,11 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
+var skippedTests = map[string]string{
+	// GODRIVER-3175: Support will be added with GODRIVER-2129.
+	"must raise an error when the hostname canonicalization is invalid": "Support will be added with GODRIVER-2129.",
+}
+
 type credential struct {
 	Username  string
 	Password  *string
@@ -48,16 +53,19 @@ func runTestsInFile(t *testing.T, dirname string, filename string) {
 	var container testContainer
 	require.NoError(t, json.Unmarshal(content, &container))
 
-	// Remove ".json" from filename.
-	filename = filename[:len(filename)-5]
-
 	for _, testCase := range container.Tests {
-		runTest(t, filename, testCase)
+		t.Run(filename, func(t *testing.T) {
+			runTest(t, testCase)
+		})
 	}
 }
 
-func runTest(t *testing.T, filename string, test testCase) {
-	t.Run(filename+":"+test.Description, func(t *testing.T) {
+func runTest(t *testing.T, test testCase) {
+	if skipReason, ok := skippedTests[test.Description]; ok {
+		t.Skipf("skipping due to known failure: %q", skipReason)
+	}
+
+	t.Run(test.Description, func(t *testing.T) {
 		opts := options.Client().ApplyURI(test.URI)
 
 		if test.Valid {

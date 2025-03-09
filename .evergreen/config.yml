@@ -162,17 +162,18 @@ functions:
         args: 
           - ${DRIVERS_TOOLS}/.evergreen/teardown.sh
 
-  assume-ec2-role:
+  assume-test-secrets-ec2-role:
     - command: ec2.assume_role
       params:
         role_arn: ${aws_test_secrets_role}
+        duration_seconds: 1800
 
   run-oidc-auth-test-with-test-credentials:
     - command: subprocess.exec
       type: test
       params:
         binary: bash
-        env: 
+        env:
           OIDC: oidc
         include_expansions_in_env: [DRIVERS_TOOLS, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN]
         args: [*task-runner, test-oidc]
@@ -395,6 +396,16 @@ functions:
         binary: "bash"
         include_expansions_in_env: ["MONGODB_URI"]
         args: [*task-runner, test-goleak]
+
+  "run oidc k8s test":
+    - command: subprocess.exec
+      type: test
+      params:
+        binary: bash
+        include_expansions_in_env: [AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN, VARIANT, DRIVERS_TOOLS]
+        env:
+          OIDC_ENV: k8s
+        args: [*task-runner, test-oidc-remote]
 
   run-ocsp-server:
     - command: subprocess.exec
@@ -1658,6 +1669,19 @@ tasks:
           OIDC_ENV: gcp
         args: [*task-runner, test-oidc-remote]
 
+  - name: "oidc-auth-test-k8s"
+    commands:
+    - func: assume-test-secrets-ec2-role
+    - func: "run oidc k8s test"
+      vars:
+        VARIANT: eks
+    - func: "run oidc k8s test"
+      vars:
+        VARIANT: gke
+    - func: "run oidc k8s test"
+      vars:
+        VARIANT: aks
+
   - name: "test-search-index"
     commands:
       - func: "bootstrap-mongo-orchestration"
@@ -1902,14 +1926,17 @@ task_groups:
            - ${DRIVERS_TOOLS}/.evergreen/csfle/azurekms/teardown.sh
       - func: teardown
       - func: handle-test-artifacts
-      
     tasks:
       - testazurekms-task
 
   - name: testoidc_task_group
+    setup_group_can_fail_task: true
+    setup_group_timeout_secs: 1800
+    teardown_task_can_fail_task: true
+    teardown_group_timeout_secs: 180 # 3 minutes (max allowed time)
     setup_group:
       - func: setup-system
-      - func: assume-ec2-role
+      - func: assume-test-secrets-ec2-role
       - command: subprocess.exec
         params:
           binary: bash
@@ -1926,12 +1953,14 @@ task_groups:
             - ${DRIVERS_TOOLS}/.evergreen/auth_oidc/teardown.sh
       - func: teardown
       - func: handle-test-artifacts
-    setup_group_can_fail_task: true
-    setup_group_timeout_secs: 1800
     tasks:
       - oidc-auth-test
 
   - name: testazureoidc_task_group
+    setup_group_can_fail_task: true
+    setup_group_timeout_secs: 1800
+    teardown_task_can_fail_task: true
+    teardown_group_timeout_secs: 180 # 3 minutes (max allowed time)
     setup_group:
       - func: setup-system
       - command: subprocess.exec
@@ -1949,12 +1978,14 @@ task_groups:
             - ${DRIVERS_TOOLS}/.evergreen/auth_oidc/azure/teardown.sh
       - func: teardown
       - func: handle-test-artifacts
-    setup_group_can_fail_task: true
-    setup_group_timeout_secs: 1800
     tasks:
       - oidc-auth-test-azure
 
   - name: testgcpoidc_task_group
+    setup_group_can_fail_task: true
+    setup_group_timeout_secs: 1800
+    teardown_task_can_fail_task: true
+    teardown_group_timeout_secs: 180 # 3 minutes (max allowed time)
     setup_group:
       - func: setup-system
       - command: subprocess.exec
@@ -1972,10 +2003,32 @@ task_groups:
             - ${DRIVERS_TOOLS}/.evergreen/auth_oidc/gcp/teardown.sh
       - func: teardown
       - func: handle-test-artifacts
-    setup_group_can_fail_task: true
-    setup_group_timeout_secs: 1800
     tasks:
       - oidc-auth-test-gcp
+
+  - name: testk8soidc_task_group
+    setup_group_can_fail_task: true
+    setup_group_timeout_secs: 1800
+    teardown_task_can_fail_task: true
+    teardown_group_timeout_secs: 180 # 3 minutes (max allowed time)
+    setup_group:
+      - func: setup-system
+      - command: subprocess.exec
+        params:
+          binary: bash
+          include_expansions_in_env: ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN"]
+          args:
+            - ${DRIVERS_TOOLS}/.evergreen/auth_oidc/k8s/setup.sh
+    teardown_group:
+      - command: subprocess.exec
+        params:
+          binary: bash
+          args:
+            - ${DRIVERS_TOOLS}/.evergreen/auth_oidc/k8s/teardown.sh
+      - func: teardown
+      - func: handle-test-artifacts
+    tasks:
+      - oidc-auth-test-k8s
 
   - name: test-aws-lambda-task-group
     setup_group:
@@ -2322,8 +2375,6 @@ buildvariants:
       GO_DIST: "/opt/golang/go1.22"
     tasks:
       - name: testoidc_task_group
-        batchtime: 20160 # Use a batchtime of 14 days as suggested by the CSFLE test README
       - name: testazureoidc_task_group
-        batchtime: 20160 # Use a batchtime of 14 days as suggested by the CSFLE test README
       - name: testgcpoidc_task_group
-        batchtime: 20160 # Use a batchtime of 14 days as suggested by the CSFLE test README
+      - name: testk8soidc_task_group

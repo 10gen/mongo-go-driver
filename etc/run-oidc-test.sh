@@ -21,6 +21,12 @@ elif [ $OIDC_ENV == "azure" ]; then
 elif [ $OIDC_ENV == "gcp" ]; then
     source ./secrets-export.sh
 
+elif [ $OIDC_ENV == "k8s" ]; then
+    # "run-driver-test.sh" in drivers-evergreen-tools takes care of sourcing
+    # "secrets-export.sh". Nothing to do in this block, but we still need a
+    # command to be syntactically valid, so use no-op command ":".
+    :
+
 else
     echo "Unrecognized OIDC_ENV $OIDC_ENV"
     exit 1

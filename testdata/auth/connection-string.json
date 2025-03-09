@@ -80,7 +80,7 @@
     },
     {
       "description": "should accept generic mechanism property (GSSAPI)",
-      "uri": "mongodb://user%40DOMAIN.COM@localhost/?authMechanism=GSSAPI&authMechanismProperties=SERVICE_NAME:other,CANONICALIZE_HOST_NAME:true",
+      "uri": "mongodb://user%40DOMAIN.COM@localhost/?authMechanism=GSSAPI&authMechanismProperties=SERVICE_NAME:other,CANONICALIZE_HOST_NAME:forward,SERVICE_HOST:example.com",
       "valid": true,
       "credential": {
         "username": "user@DOMAIN.COM",
@@ -89,9 +89,45 @@
         "mechanism": "GSSAPI",
         "mechanism_properties": {
           "SERVICE_NAME": "other",
-          "CANONICALIZE_HOST_NAME": true
+          "SERVICE_HOST": "example.com",
+          "CANONICALIZE_HOST_NAME": "forward"
         }
       }
+    },
+    {
+      "description": "should accept forwardAndReverse hostname canonicalization (GSSAPI)",
+      "uri": "mongodb://user%40DOMAIN.COM@localhost/?authMechanism=GSSAPI&authMechanismProperties=SERVICE_NAME:other,CANONICALIZE_HOST_NAME:forwardAndReverse",
+      "valid": true,
+      "credential": {
+        "username": "user@DOMAIN.COM",
+        "password": null,
+        "source": "$external",
+        "mechanism": "GSSAPI",
+        "mechanism_properties": {
+          "SERVICE_NAME": "other",
+          "CANONICALIZE_HOST_NAME": "forwardAndReverse"
+        }
+      }
+    },
+    {
+      "description": "should accept no hostname canonicalization (GSSAPI)",
+      "uri": "mongodb://user%40DOMAIN.COM@localhost/?authMechanism=GSSAPI&authMechanismProperties=SERVICE_NAME:other,CANONICALIZE_HOST_NAME:none",
+      "valid": true,
+      "credential": {
+        "username": "user@DOMAIN.COM",
+        "password": null,
+        "source": "$external",
+        "mechanism": "GSSAPI",
+        "mechanism_properties": {
+          "SERVICE_NAME": "other",
+          "CANONICALIZE_HOST_NAME": "none"
+        }
+      }
+    },
+    {
+      "description": "must raise an error when the hostname canonicalization is invalid",
+      "uri": "mongodb://user%40DOMAIN.COM@localhost/?authMechanism=GSSAPI&authMechanismProperties=SERVICE_NAME:other,CANONICALIZE_HOST_NAME:invalid",
+      "valid": false
     },
     {
       "description": "should accept the password (GSSAPI)",
@@ -125,47 +161,6 @@
     {
       "description": "should throw an exception if no username (GSSAPI)",
       "uri": "mongodb://localhost/?authMechanism=GSSAPI",
-      "valid": false
-    },
-    {
-      "description": "should recognize the mechanism (MONGODB-CR)",
-      "uri": "mongodb://user:password@localhost/?authMechanism=MONGODB-CR",
-      "valid": true,
-      "credential": {
-        "username": "user",
-        "password": "password",
-        "source": "admin",
-        "mechanism": "MONGODB-CR",
-        "mechanism_properties": null
-      }
-    },
-    {
-      "description": "should use the database when no authSource is specified (MONGODB-CR)",
-      "uri": "mongodb://user:password@localhost/foo?authMechanism=MONGODB-CR",
-      "valid": true,
-      "credential": {
-        "username": "user",
-        "password": "password",
-        "source": "foo",
-        "mechanism": "MONGODB-CR",
-        "mechanism_properties": null
-      }
-    },
-    {
-      "description": "should use the authSource when specified (MONGODB-CR)",
-      "uri": "mongodb://user:password@localhost/foo?authMechanism=MONGODB-CR&authSource=bar",
-      "valid": true,
-      "credential": {
-        "username": "user",
-        "password": "password",
-        "source": "bar",
-        "mechanism": "MONGODB-CR",
-        "mechanism_properties": null
-      }
-    },
-    {
-      "description": "should throw an exception if no username is supplied (MONGODB-CR)",
-      "uri": "mongodb://localhost/?authMechanism=MONGODB-CR",
       "valid": false
     },
     {
@@ -444,6 +439,213 @@
           "AWS_SESSION_TOKEN": "token!@#$%^&*()_+"
         }
       }
+    },
+    {
+      "description": "should recognise the mechanism with test environment (MONGODB-OIDC)",
+      "uri": "mongodb://localhost/?authMechanism=MONGODB-OIDC&authMechanismProperties=ENVIRONMENT:test",
+      "valid": true,
+      "credential": {
+        "username": null,
+        "password": null,
+        "source": "$external",
+        "mechanism": "MONGODB-OIDC",
+        "mechanism_properties": {
+          "ENVIRONMENT": "test"
+        }
+      }
+    },
+    {
+      "description": "should recognise the mechanism when auth source is explicitly specified and with environment (MONGODB-OIDC)",
+      "uri": "mongodb://localhost/?authMechanism=MONGODB-OIDC&authSource=$external&authMechanismProperties=ENVIRONMENT:test",
+      "valid": true,
+      "credential": {
+        "username": null,
+        "password": null,
+        "source": "$external",
+        "mechanism": "MONGODB-OIDC",
+        "mechanism_properties": {
+          "ENVIRONMENT": "test"
+        }
+      }
+    },
+    {
+      "description": "should throw an exception if supplied a password (MONGODB-OIDC)",
+      "uri": "mongodb://user:pass@localhost/?authMechanism=MONGODB-OIDC&authMechanismProperties=ENVIRONMENT:test",
+      "valid": false,
+      "credential": null
+    },
+    {
+      "description": "should throw an exception if username is specified for test (MONGODB-OIDC)",
+      "uri": "mongodb://principalName@localhost/?authMechanism=MONGODB-OIDC&authMechanismProperties=ENVIRONMENT:test",
+      "valid": false,
+      "credential": null
+    },
+    {
+      "description": "should throw an exception if specified environment is not supported (MONGODB-OIDC)",
+      "uri": "mongodb://localhost/?authMechanism=MONGODB-OIDC&authMechanismProperties=ENVIRONMENT:invalid",
+      "valid": false,
+      "credential": null
+    },
+    {
+      "description": "should throw an exception if neither environment nor callbacks specified (MONGODB-OIDC)",
+      "uri": "mongodb://localhost/?authMechanism=MONGODB-OIDC",
+      "valid": false,
+      "credential": null
+    },
+    {
+      "description": "should throw an exception when unsupported auth property is specified (MONGODB-OIDC)",
+      "uri": "mongodb://localhost/?authMechanism=MONGODB-OIDC&authMechanismProperties=UnsupportedProperty:unexisted",
+      "valid": false,
+      "credential": null
+    },
+    {
+      "description": "should recognise the mechanism with azure provider (MONGODB-OIDC)",
+      "uri": "mongodb://localhost/?authMechanism=MONGODB-OIDC&authMechanismProperties=ENVIRONMENT:azure,TOKEN_RESOURCE:foo",
+      "valid": true,
+      "credential": {
+        "username": null,
+        "password": null,
+        "source": "$external",
+        "mechanism": "MONGODB-OIDC",
+        "mechanism_properties": {
+          "ENVIRONMENT": "azure",
+          "TOKEN_RESOURCE": "foo"
+        }
+      }
+    },
+    {
+      "description": "should accept a username with azure provider (MONGODB-OIDC)",
+      "uri": "mongodb://user@localhost/?authMechanism=MONGODB-OIDC&authMechanismProperties=ENVIRONMENT:azure,TOKEN_RESOURCE:foo",
+      "valid": true,
+      "credential": {
+        "username": "user",
+        "password": null,
+        "source": "$external",
+        "mechanism": "MONGODB-OIDC",
+        "mechanism_properties": {
+          "ENVIRONMENT": "azure",
+          "TOKEN_RESOURCE": "foo"
+        }
+      }
+    },
+    {
+      "description": "should accept a url-encoded TOKEN_RESOURCE (MONGODB-OIDC)",
+      "uri": "mongodb://user@localhost/?authMechanism=MONGODB-OIDC&authMechanismProperties=ENVIRONMENT:azure,TOKEN_RESOURCE:mongodb%3A%2F%2Ftest-cluster",
+      "valid": true,
+      "credential": {
+        "username": "user",
+        "password": null,
+        "source": "$external",
+        "mechanism": "MONGODB-OIDC",
+        "mechanism_properties": {
+          "ENVIRONMENT": "azure",
+          "TOKEN_RESOURCE": "mongodb://test-cluster"
+        }
+      }
+    },
+    {
+      "description": "should accept an un-encoded TOKEN_RESOURCE (MONGODB-OIDC)",
+      "uri": "mongodb://user@localhost/?authMechanism=MONGODB-OIDC&authMechanismProperties=ENVIRONMENT:azure,TOKEN_RESOURCE:mongodb://test-cluster",
+      "valid": true,
+      "credential": {
+        "username": "user",
+        "password": null,
+        "source": "$external",
+        "mechanism": "MONGODB-OIDC",
+        "mechanism_properties": {
+          "ENVIRONMENT": "azure",
+          "TOKEN_RESOURCE": "mongodb://test-cluster"
+        }
+      }
+    },
+    {
+      "description": "should handle a complicated url-encoded TOKEN_RESOURCE (MONGODB-OIDC)",
+      "uri": "mongodb://user@localhost/?authMechanism=MONGODB-OIDC&authMechanismProperties=ENVIRONMENT:azure,TOKEN_RESOURCE:abcd%25ef%3Ag%26hi",
+      "valid": true,
+      "credential": {
+        "username": "user",
+        "password": null,
+        "source": "$external",
+        "mechanism": "MONGODB-OIDC",
+        "mechanism_properties": {
+          "ENVIRONMENT": "azure",
+          "TOKEN_RESOURCE": "abcd%ef:g&hi"
+        }
+      }
+    },
+    {
+      "description": "should url-encode a TOKEN_RESOURCE (MONGODB-OIDC)",
+      "uri": "mongodb://user@localhost/?authMechanism=MONGODB-OIDC&authMechanismProperties=ENVIRONMENT:azure,TOKEN_RESOURCE:a$b",
+      "valid": true,
+      "credential": {
+        "username": "user",
+        "password": null,
+        "source": "$external",
+        "mechanism": "MONGODB-OIDC",
+        "mechanism_properties": {
+          "ENVIRONMENT": "azure",
+          "TOKEN_RESOURCE": "a$b"
+        }
+      }
+    },
+    {
+      "description": "should accept a username and throw an error for a password with azure provider (MONGODB-OIDC)",
+      "uri": "mongodb://user:pass@localhost/?authMechanism=MONGODB-OIDC&authMechanismProperties=ENVIRONMENT:azure,TOKEN_RESOURCE:foo",
+      "valid": false,
+      "credential": null
+    },
+    {
+      "description": "should throw an exception if no token audience is given for azure provider (MONGODB-OIDC)",
+      "uri": "mongodb://username@localhost/?authMechanism=MONGODB-OIDC&authMechanismProperties=ENVIRONMENT:azure",
+      "valid": false,
+      "credential": null
+    },
+    {
+      "description": "should recognise the mechanism with gcp provider (MONGODB-OIDC)",
+      "uri": "mongodb://localhost/?authMechanism=MONGODB-OIDC&authMechanismProperties=ENVIRONMENT:gcp,TOKEN_RESOURCE:foo",
+      "valid": true,
+      "credential": {
+        "username": null,
+        "password": null,
+        "source": "$external",
+        "mechanism": "MONGODB-OIDC",
+        "mechanism_properties": {
+          "ENVIRONMENT": "gcp",
+          "TOKEN_RESOURCE": "foo"
+        }
+      }
+    },
+    {
+      "description": "should throw an error for a username and password with gcp provider (MONGODB-OIDC)",
+      "uri": "mongodb://user:pass@localhost/?authMechanism=MONGODB-OIDC&authMechanismProperties=ENVIRONMENT:gcp,TOKEN_RESOURCE:foo",
+      "valid": false,
+      "credential": null
+    },
+    {
+      "description": "should throw an error if not TOKEN_RESOURCE with gcp provider (MONGODB-OIDC)",
+      "uri": "mongodb://user:pass@localhost/?authMechanism=MONGODB-OIDC&authMechanismProperties=ENVIRONMENT:gcp",
+      "valid": false,
+      "credential": null
+    },
+    {
+      "description": "should recognise the mechanism with k8s provider (MONGODB-OIDC)",
+      "uri": "mongodb://localhost/?authMechanism=MONGODB-OIDC&authMechanismProperties=ENVIRONMENT:k8s",
+      "valid": true,
+      "credential": {
+        "username": null,
+        "password": null,
+        "source": "$external",
+        "mechanism": "MONGODB-OIDC",
+        "mechanism_properties": {
+          "ENVIRONMENT": "k8s"
+        }
+      }
+    },
+    {
+      "description": "should throw an error for a username and password with k8s provider (MONGODB-OIDC)",
+      "uri": "mongodb://user:pass@localhost/?authMechanism=MONGODB-OIDC&authMechanismProperties=ENVIRONMENT:k8s",
+      "valid": false,
+      "credential": null
     }
   ]
 }

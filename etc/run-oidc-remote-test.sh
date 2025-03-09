@@ -31,6 +31,14 @@ elif [ $OIDC_ENV == "gcp" ]; then
     export GCPOIDC_TEST_CMD="PROJECT_DIRECTORY='.' OIDC_ENV=gcp OIDC=oidc ./etc/run-oidc-test.sh ./test"
     bash ${DRIVERS_TOOLS}/.evergreen/auth_oidc/gcp/run-driver-test.sh
 
+elif [ $OIDC_ENV == "k8s" ]; then
+    export K8S_VARIANT=${VARIANT}
+    export K8S_DRIVERS_TAR_FILE=$DRIVERS_TAR_FILE
+    export K8S_TEST_CMD="PROJECT_DIRECTORY='.' OIDC_ENV=k8s OIDC=oidc ./etc/run-oidc-test.sh ./test"
+    bash ${DRIVERS_TOOLS}/.evergreen/auth_oidc/k8s/setup-pod.sh
+    bash ${DRIVERS_TOOLS}/.evergreen/auth_oidc/k8s/run-driver-test.sh
+    bash ${DRIVERS_TOOLS}/.evergreen/auth_oidc/k8s/teardown-pod.sh
+
 else
     echo "Unrecognized OIDC_ENV $OIDC_ENV"
     exit 1

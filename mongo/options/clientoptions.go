@@ -596,24 +596,45 @@ func (c *ClientOptions) Validate() error {
 			return fmt.Errorf("cannot set both OIDCMachineCallback and OIDCHumanCallback, only one may be specified")
 		}
 		if c.Auth.OIDCHumanCallback == nil && c.Auth.AuthMechanismProperties[auth.AllowedHostsProp] != "" {
-			return fmt.Errorf("Cannot specify ALLOWED_HOSTS without an OIDCHumanCallback")
+			return fmt.Errorf("cannot specify ALLOWED_HOSTS without an OIDCHumanCallback")
 		}
+		if c.Auth.OIDCMachineCallback == nil && c.Auth.OIDCHumanCallback == nil && c.Auth.AuthMechanismProperties[auth.EnvironmentProp] == "" {
+			return errors.New("must specify at least one of OIDCMachineCallback, OIDCHumanCallback, or ENVIRONMENT authMechanismProperty")
+		}
+
+		// Return an error if an unsupported authMechanismProperty is specified
+		// for MONGODB-OIDC.
+		for prop := range c.Auth.AuthMechanismProperties {
+			switch prop {
+			case auth.AllowedHostsProp, auth.EnvironmentProp, auth.ResourceProp:
+			default:
+				return fmt.Errorf("auth mechanism property %q is not valid for MONGODB-OIDC", prop)
+			}
+		}
+
 		if env, ok := c.Auth.AuthMechanismProperties[auth.EnvironmentProp]; ok {
 			switch env {
 			case auth.GCPEnvironmentValue, auth.AzureEnvironmentValue:
+				if c.Auth.AuthMechanismProperties[auth.ResourceProp] == "" {
+					return fmt.Errorf("%q must be set for the %s %q", auth.ResourceProp, env, auth.EnvironmentProp)
+				}
+				fallthrough
+			case auth.K8SEnvironmentValue:
 				if c.Auth.OIDCMachineCallback != nil {
 					return fmt.Errorf("OIDCMachineCallback cannot be specified with the %s %q", env, auth.EnvironmentProp)
 				}
 				if c.Auth.OIDCHumanCallback != nil {
 					return fmt.Errorf("OIDCHumanCallback cannot be specified with the %s %q", env, auth.EnvironmentProp)
 				}
-				if c.Auth.AuthMechanismProperties[auth.ResourceProp] == "" {
-					return fmt.Errorf("%q must be set for the %s %q", auth.ResourceProp, env, auth.EnvironmentProp)
-				}
-			default:
+			case auth.TestEnvironmentValue:
 				if c.Auth.AuthMechanismProperties[auth.ResourceProp] != "" {
 					return fmt.Errorf("%q must not be set for the %s %q", auth.ResourceProp, env, auth.EnvironmentProp)
 				}
+				if c.Auth.Username != "" {
+					return fmt.Errorf("must not specify username for %s %q", env, auth.EnvironmentProp)
+				}
+			default:
+				return fmt.Errorf("the %s %q is not supported for MONGODB-OIDC", env, auth.EnvironmentProp)
 			}
 		}
 	}
