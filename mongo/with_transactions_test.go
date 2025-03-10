@@ -55,7 +55,8 @@ func TestConvenientTransactions(t *testing.T) {
 			{"killAllSessions", bson.A{}},
 		}).Err()
 		if err != nil {
-			if ce, ok := err.(CommandError); !ok || ce.Code != errorInterrupted {
+			var ce CommandError
+			if !errors.As(err, &ce) || ce.Code != errorInterrupted {
 				t.Fatalf("killAllSessions error: %v", err)
 			}
 		}
@@ -115,8 +116,8 @@ func TestConvenientTransactions(t *testing.T) {
 				return nil, CommandError{Name: "test Error", Labels: []string{driver.TransientTransactionError}}
 			})
 			assert.NotNil(t, err, "expected WithTransaction error, got nil")
-			cmdErr, ok := err.(CommandError)
-			assert.True(t, ok, "expected error type %T, got %T", CommandError{}, err)
+			var cmdErr CommandError
+			assert.True(t, errors.As(err, &cmdErr), "expected error type %T, got %T", cmdErr, err)
 			assert.True(t, cmdErr.HasErrorLabel(driver.TransientTransactionError),
 				"expected error with label %v, got %v", driver.TransientTransactionError, cmdErr)
 		})
@@ -148,8 +149,8 @@ func TestConvenientTransactions(t *testing.T) {
 				return nil, err
 			})
 			assert.NotNil(t, err, "expected WithTransaction error, got nil")
-			cmdErr, ok := err.(CommandError)
-			assert.True(t, ok, "expected error type %T, got %T", CommandError{}, err)
+			var cmdErr CommandError
+			assert.True(t, errors.As(err, &cmdErr), "expected error type %T, got %T", cmdErr, err)
 			assert.True(t, cmdErr.HasErrorLabel(driver.UnknownTransactionCommitResult),
 				"expected error with label %v, got %v", driver.UnknownTransactionCommitResult, cmdErr)
 		})
@@ -181,8 +182,8 @@ func TestConvenientTransactions(t *testing.T) {
 				return nil, err
 			})
 			assert.NotNil(t, err, "expected WithTransaction error, got nil")
-			cmdErr, ok := err.(CommandError)
-			assert.True(t, ok, "expected error type %T, got %T", CommandError{}, err)
+			var cmdErr CommandError
+			assert.True(t, errors.As(err, &cmdErr), "expected error type %T, got %T", cmdErr, err)
 			assert.True(t, cmdErr.HasErrorLabel(driver.TransientTransactionError),
 				"expected error with label %v, got %v", driver.TransientTransactionError, cmdErr)
 		})
@@ -392,7 +393,8 @@ func TestConvenientTransactions(t *testing.T) {
 				{"killAllSessions", bson.A{}},
 			}).Err()
 			if err != nil {
-				if ce, ok := err.(CommandError); !ok || ce.Code != errorInterrupted {
+				var ce CommandError
+				if !errors.As(err, &ce) || ce.Code != errorInterrupted {
 					t.Fatalf("killAllSessions error: %v", err)
 				}
 			}

@@ -339,8 +339,8 @@ AggregateExecuteLoop:
 			break AggregateExecuteLoop
 		}
 
-		switch tt := err.(type) {
-		case driver.Error:
+		var tt driver.Error
+		if errors.As(err, &tt) {
 			// If error is not retryable, do not retry.
 			if !tt.RetryableRead() {
 				break AggregateExecuteLoop
@@ -370,7 +370,7 @@ AggregateExecuteLoop:
 
 			// Reset deployment.
 			cs.aggregate.Deployment(cs.createOperationDeployment(server, conn))
-		default:
+		} else {
 			// Do not retry if error is not a driver error.
 			break AggregateExecuteLoop
 		}

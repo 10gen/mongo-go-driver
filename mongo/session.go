@@ -193,7 +193,8 @@ func (s *Session) WithTransaction(
 			default:
 			}
 
-			if cerr, ok := err.(CommandError); ok {
+			var cerr CommandError
+			if errors.As(err, &cerr) {
 				if cerr.HasErrorLabel(driver.UnknownTransactionCommitResult) && !cerr.IsMaxTimeMSExpiredError() {
 					continue
 				}

@@ -57,7 +57,7 @@ func replaceErrors(err error) error {
 	// ignored. For non-DDL write commands (insert, update, etc), acknowledgement
 	// should be be propagated at the result-level: e.g.,
 	// SingleResult.Acknowledged.
-	if err == driver.ErrUnacknowledgedWrite {
+	if errors.Is(err, driver.ErrUnacknowledgedWrite) {
 		return nil
 	}
 
@@ -721,12 +721,12 @@ func processWriteError(err error) (returnResult, error) {
 	// ignored. For non-DDL write commands (insert, update, etc), acknowledgement
 	// should be be propagated at the result-level: e.g.,
 	// SingleResult.Acknowledged.
-	if err == driver.ErrUnacknowledgedWrite {
+	if errors.Is(err, driver.ErrUnacknowledgedWrite) {
 		return rrAllUnacknowledged, nil
 	}
 
-	wce, ok := err.(driver.WriteCommandError)
-	if !ok {
+	var wce driver.WriteCommandError
+	if !errors.As(err, &wce) {
 		return rrNone, replaceErrors(err)
 	}
 
