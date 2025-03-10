@@ -9,6 +9,7 @@ package bson
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -456,13 +457,14 @@ func TestD_UnmarshalJSON(t *testing.T) {
 				want := json.Unmarshal([]byte(tc.test), &a)
 				var b D
 				got := json.Unmarshal([]byte(tc.test), &b)
-				switch w := want.(type) {
-				case *json.UnmarshalTypeError:
+				w := new(json.UnmarshalTypeError)
+				if errors.As(want, &w) {
 					w.Type = reflect.TypeOf(b)
 					require.IsType(t, want, got)
-					g := got.(*json.UnmarshalTypeError)
+					g := new(json.UnmarshalTypeError)
+					assert.True(t, errors.As(got, &g))
 					assert.Equal(t, w, g)
-				default:
+				} else {
 					assert.Equal(t, want, got)
 				}
 			})
