@@ -381,14 +381,36 @@ func (bc *BatchCursor) getMore(ctx context.Context) {
 
 	bc.err = Operation{
 		CommandFn: func(dst []byte, _ description.SelectedServer) ([]byte, error) {
+			// If maxAwaitTime > remaining timeoutMS - minRoundTripTime, then use
+			// send remaining TimeoutMS - minRoundTripTime allowing the server an
+			// opportunity to respond with an empty batch.
+			var maxTimeMS int64
+			if bc.maxAwaitTime != nil {
+				_, ctxDeadlineSet := ctx.Deadline()
+
+				if ctxDeadlineSet {
+					rttMonitor := bc.Server().RTTMonitor()
+
+					var err error
+					maxTimeMS, err = driverutil.CalculateMaxTimeMS(ctx, rttMonitor.Min(), rttMonitor.Stats(), ErrDeadlineWouldBeExceeded)
+					if err != nil {
+						return nil, err
+					}
+				}
+
+				if !ctxDeadlineSet || bc.maxAwaitTime.Milliseconds() < maxTimeMS {
+					maxTimeMS = bc.maxAwaitTime.Milliseconds()
+				}
+			}
+
 			dst = bsoncore.AppendInt64Element(dst, "getMore", bc.id)
 			dst = bsoncore.AppendStringElement(dst, "collection", bc.collection)
 			if numToReturn > 0 {
 				dst = bsoncore.AppendInt32Element(dst, "batchSize", numToReturn)
 			}
 
-			if bc.maxAwaitTime != nil && *bc.maxAwaitTime > 0 {
-				dst = bsoncore.AppendInt64Element(dst, "maxTimeMS", int64(*bc.maxAwaitTime)/int64(time.Millisecond))
+			if maxTimeMS > 0 {
+				dst = bsoncore.AppendInt64Element(dst, "maxTimeMS", maxTimeMS)
 			}
 
 			comment, err := codecutil.MarshalValue(bc.comment, bc.encoderFn)
