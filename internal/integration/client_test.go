@@ -13,6 +13,7 @@ import (
 	"os"
 	"reflect"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -675,9 +676,9 @@ func TestClient(t *testing.T) {
 			},
 		}
 
+		_, err := mt.Coll.InsertOne(context.Background(), bson.D{})
 		for _, tc := range testCases {
 			mt.Run(tc.desc, func(mt *mtest.T) {
-				_, err := mt.Coll.InsertOne(context.Background(), bson.D{})
 				require.NoError(mt, err)
 
 				mt.SetFailPoint(failpoint.FailPoint{
@@ -692,30 +693,47 @@ func TestClient(t *testing.T) {
 
 				mt.ClearEvents()
 
+				wg := sync.WaitGroup{}
+				wg.Add(50)
+
 				for i := 0; i < 50; i++ {
-					// Run 50 operations, each with a timeout of 50ms. Expect
+					// Run 50 concurrent operations, each with a timeout of 50ms. Expect
 					// them to all return a timeout error because the failpoint
-					// blocks find operations for 500ms. Run 50 to increase the
+					// blocks find operations for 50ms. Run 50 to increase the
 					// probability that an operation will time out in a way that
 					// can cause a retry.
-					ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
-					err = tc.operation(ctx, mt.Coll)
-					cancel()
-					assert.ErrorIs(mt, err, context.DeadlineExceeded)
-					assert.True(mt, mongo.IsTimeout(err), "expected mongo.IsTimeout(err) to be true")
+					go func() {
+						ctx, cancel := context.WithTimeout(context.Background(), 150*time.Millisecond)
+						err := tc.operation(ctx, mt.Coll)
+						cancel()
+						assert.ErrorIs(mt, err, context.DeadlineExceeded)
+						assert.True(mt, mongo.IsTimeout(err), "expected mongo.IsTimeout(err) to be true")
 
-					// Assert that each operation reported exactly one command
-					// started events, which means the operation did not retry
-					// after the context timeout.
-					evts := mt.GetAllStartedEvents()
-					require.Len(mt,
-						mt.GetAllStartedEvents(),
-						1,
-						"expected exactly 1 command started event per operation, but got %d after %d iterations",
-						len(evts),
-						i)
-					mt.ClearEvents()
+						wg.Done()
+					}()
 				}
+
+				wg.Wait()
+
+				// Since an operation requires checking out a connection and because we
+				// attempt a pending read for socket timeouts and since the test forces
+				// 50 concurrent socket timeouts,  then it's possible that an
+				// operation checks out a connection that has a pending read. In this
+				// case the operation will time out when checking out a connection, and
+				// a started event will not be propagated. So instead of
+				// checking that we got exactly 50 started events, we should instead
+				// ensure that the number of started events is equal to the number of
+				// unique connections used to process the operations.
+				pendingReadConns := mt.NumberConnectionsPendingReadStarted()
+				evts := mt.GetAllStartedEvents()
+
+				require.Equal(mt,
+					len(evts)+pendingReadConns,
+					50,
+					"expected exactly 1 command started event per operation (50), but got %d",
+					len(evts)+pendingReadConns)
+				mt.ClearEvents()
+				mt.ClearFailPoints()
 			})
 		}
 	})

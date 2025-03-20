@@ -30,6 +30,9 @@ const (
 	connectionCheckOutFailedEvent   monitoringEventType = "ConnectionCheckOutFailedEvent"
 	connectionCheckedOutEvent       monitoringEventType = "ConnectionCheckedOutEvent"
 	connectionCheckedInEvent        monitoringEventType = "ConnectionCheckedInEvent"
+	connectionPendingReadStarted    monitoringEventType = "ConnectionPendingReadStarted"
+	connectionPendingReadSucceeded  monitoringEventType = "ConnectionPendingReadSucceeded"
+	connectionPendingReadFailed     monitoringEventType = "ConnectionPendingReadFailed"
 	serverDescriptionChangedEvent   monitoringEventType = "ServerDescriptionChangedEvent"
 	serverHeartbeatFailedEvent      monitoringEventType = "ServerHeartbeatFailedEvent"
 	serverHeartbeatStartedEvent     monitoringEventType = "ServerHeartbeatStartedEvent"
@@ -67,6 +70,12 @@ func monitoringEventTypeFromString(eventStr string) (monitoringEventType, bool) 
 		return connectionCheckedOutEvent, true
 	case "connectioncheckedinevent":
 		return connectionCheckedInEvent, true
+	case "connectionpendingreadstarted":
+		return connectionPendingReadStarted, true
+	case "connectionpendingreadsucceeded":
+		return connectionPendingReadSucceeded, true
+	case "connectionpendingreadfailed":
+		return connectionPendingReadFailed, true
 	case "serverdescriptionchangedevent":
 		return serverDescriptionChangedEvent, true
 	case "serverheartbeatfailedevent":
@@ -106,6 +115,12 @@ func monitoringEventTypeFromPoolEvent(evt *event.PoolEvent) monitoringEventType 
 		return connectionCheckedOutEvent
 	case event.ConnectionCheckedIn:
 		return connectionCheckedInEvent
+	case event.ConnectionPendingReadStarted:
+		return connectionPendingReadStarted
+	case event.ConnectionPendingReadSucceeded:
+		return connectionPendingReadSucceeded
+	case event.ConnectionPendingReadFailed:
+		return connectionPendingReadFailed
 	default:
 		return ""
 	}

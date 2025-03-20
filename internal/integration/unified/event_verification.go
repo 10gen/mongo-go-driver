@@ -56,7 +56,10 @@ type cmapEvent struct {
 		Reason *string `bson:"reason"`
 	} `bson:"connectionCheckOutFailedEvent"`
 
-	ConnectionCheckedInEvent *struct{} `bson:"connectionCheckedInEvent"`
+	ConnectionCheckedInEvent       *struct{} `bson:"connectionCheckedInEvent"`
+	ConnectionPendingReadStarted   *struct{} `bson:"connectionPendingReadStarted"`
+	ConnectionPendingreadSucceeded *struct{} `bson:"connectionPendingReadSucceeded"`
+	ConnectionPendingReadFailed    *struct{} `bson:"connectionPendingReadFailed"`
 
 	PoolClearedEvent *struct {
 		HasServiceID              *bool `bson:"hasServiceId"`
@@ -348,6 +351,18 @@ func verifyCMAPEvents(client *clientEntity, expectedEvents *expectedEvents) erro
 			}
 		case evt.ConnectionCheckedInEvent != nil:
 			if _, pooled, err = getNextPoolEvent(pooled, event.ConnectionCheckedIn); err != nil {
+				return newEventVerificationError(idx, client, "failed to get next pool event: %v", err.Error())
+			}
+		case evt.ConnectionPendingReadStarted != nil:
+			if _, pooled, err = getNextPoolEvent(pooled, event.ConnectionPendingReadStarted); err != nil {
+				return newEventVerificationError(idx, client, "failed to get next pool event: %v", err.Error())
+			}
+		case evt.ConnectionPendingreadSucceeded != nil:
+			if _, pooled, err = getNextPoolEvent(pooled, event.ConnectionPendingReadSucceeded); err != nil {
+				return newEventVerificationError(idx, client, "failed to get next pool event: %v", err.Error())
+			}
+		case evt.ConnectionPendingReadFailed != nil:
+			if _, pooled, err = getNextPoolEvent(pooled, event.ConnectionPendingReadFailed); err != nil {
 				return newEventVerificationError(idx, client, "failed to get next pool event: %v", err.Error())
 			}
 		case evt.PoolClearedEvent != nil:

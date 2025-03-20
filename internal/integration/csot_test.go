@@ -38,12 +38,13 @@ func TestCSOT_maxTimeMS(t *testing.T) {
 	mt := mtest.New(t, mtest.NewOptions().CreateClient(false))
 
 	testCases := []struct {
-		desc           string
-		commandName    string
-		setup          func(coll *mongo.Collection) error
-		operation      func(ctx context.Context, coll *mongo.Collection) error
-		sendsMaxTimeMS bool
-		topologies     []mtest.TopologyKind
+		desc                             string
+		commandName                      string
+		setup                            func(coll *mongo.Collection) error
+		operation                        func(ctx context.Context, coll *mongo.Collection) error
+		sendsMaxTimeMS                   bool
+		topologies                       []mtest.TopologyKind
+		preventsConnClosureWithTimeoutMS bool
 	}{
 		{
 			desc:        "FindOne",
@@ -55,7 +56,8 @@ func TestCSOT_maxTimeMS(t *testing.T) {
 			operation: func(ctx context.Context, coll *mongo.Collection) error {
 				return coll.FindOne(ctx, bson.D{}).Err()
 			},
-			sendsMaxTimeMS: true,
+			sendsMaxTimeMS:                   true,
+			preventsConnClosureWithTimeoutMS: true,
 		},
 		{
 			desc:        "Find",
@@ -68,7 +70,8 @@ func TestCSOT_maxTimeMS(t *testing.T) {
 				_, err := coll.Find(ctx, bson.D{})
 				return err
 			},
-			sendsMaxTimeMS: false,
+			sendsMaxTimeMS:                   false,
+			preventsConnClosureWithTimeoutMS: false,
 		},
 		{
 			desc:        "FindOneAndDelete",
@@ -80,7 +83,8 @@ func TestCSOT_maxTimeMS(t *testing.T) {
 			operation: func(ctx context.Context, coll *mongo.Collection) error {
 				return coll.FindOneAndDelete(ctx, bson.D{}).Err()
 			},
-			sendsMaxTimeMS: true,
+			sendsMaxTimeMS:                   true,
+			preventsConnClosureWithTimeoutMS: true,
 		},
 		{
 			desc:        "FindOneAndUpdate",
@@ -92,7 +96,8 @@ func TestCSOT_maxTimeMS(t *testing.T) {
 			operation: func(ctx context.Context, coll *mongo.Collection) error {
 				return coll.FindOneAndUpdate(ctx, bson.D{}, bson.M{"$set": bson.M{"key": "value"}}).Err()
 			},
-			sendsMaxTimeMS: true,
+			sendsMaxTimeMS:                   true,
+			preventsConnClosureWithTimeoutMS: true,
 		},
 		{
 			desc:        "FindOneAndReplace",
@@ -104,7 +109,8 @@ func TestCSOT_maxTimeMS(t *testing.T) {
 			operation: func(ctx context.Context, coll *mongo.Collection) error {
 				return coll.FindOneAndReplace(ctx, bson.D{}, bson.D{}).Err()
 			},
-			sendsMaxTimeMS: true,
+			sendsMaxTimeMS:                   true,
+			preventsConnClosureWithTimeoutMS: true,
 		},
 		{
 			desc:        "InsertOne",
@@ -113,7 +119,8 @@ func TestCSOT_maxTimeMS(t *testing.T) {
 				_, err := coll.InsertOne(ctx, bson.D{})
 				return err
 			},
-			sendsMaxTimeMS: true,
+			sendsMaxTimeMS:                   true,
+			preventsConnClosureWithTimeoutMS: true,
 		},
 		{
 			desc:        "InsertMany",
@@ -122,7 +129,8 @@ func TestCSOT_maxTimeMS(t *testing.T) {
 				_, err := coll.InsertMany(ctx, []interface{}{bson.D{}})
 				return err
 			},
-			sendsMaxTimeMS: true,
+			sendsMaxTimeMS:                   true,
+			preventsConnClosureWithTimeoutMS: true,
 		},
 		{
 			desc:        "UpdateOne",
@@ -131,7 +139,8 @@ func TestCSOT_maxTimeMS(t *testing.T) {
 				_, err := coll.UpdateOne(ctx, bson.D{}, bson.M{"$set": bson.M{"key": "value"}})
 				return err
 			},
-			sendsMaxTimeMS: true,
+			sendsMaxTimeMS:                   true,
+			preventsConnClosureWithTimeoutMS: true,
 		},
 		{
 			desc:        "UpdateMany",
@@ -140,7 +149,8 @@ func TestCSOT_maxTimeMS(t *testing.T) {
 				_, err := coll.UpdateMany(ctx, bson.D{}, bson.M{"$set": bson.M{"key": "value"}})
 				return err
 			},
-			sendsMaxTimeMS: true,
+			sendsMaxTimeMS:                   true,
+			preventsConnClosureWithTimeoutMS: true,
 		},
 		{
 			desc:        "ReplaceOne",
@@ -149,7 +159,8 @@ func TestCSOT_maxTimeMS(t *testing.T) {
 				_, err := coll.ReplaceOne(ctx, bson.D{}, bson.D{})
 				return err
 			},
-			sendsMaxTimeMS: true,
+			sendsMaxTimeMS:                   true,
+			preventsConnClosureWithTimeoutMS: true,
 		},
 		{
 			desc:        "DeleteOne",
@@ -158,7 +169,8 @@ func TestCSOT_maxTimeMS(t *testing.T) {
 				_, err := coll.DeleteOne(ctx, bson.D{})
 				return err
 			},
-			sendsMaxTimeMS: true,
+			sendsMaxTimeMS:                   true,
+			preventsConnClosureWithTimeoutMS: true,
 		},
 		{
 			desc:        "DeleteMany",
@@ -168,6 +180,8 @@ func TestCSOT_maxTimeMS(t *testing.T) {
 				return err
 			},
 			sendsMaxTimeMS: true,
+
+			preventsConnClosureWithTimeoutMS: true,
 		},
 		{
 			desc:        "Distinct",
@@ -175,7 +189,8 @@ func TestCSOT_maxTimeMS(t *testing.T) {
 			operation: func(ctx context.Context, coll *mongo.Collection) error {
 				return coll.Distinct(ctx, "name", bson.D{}).Err()
 			},
-			sendsMaxTimeMS: true,
+			sendsMaxTimeMS:                   true,
+			preventsConnClosureWithTimeoutMS: true,
 		},
 		{
 			desc:        "Aggregate",
@@ -184,7 +199,8 @@ func TestCSOT_maxTimeMS(t *testing.T) {
 				_, err := coll.Aggregate(ctx, mongo.Pipeline{})
 				return err
 			},
-			sendsMaxTimeMS: false,
+			sendsMaxTimeMS:                   false,
+			preventsConnClosureWithTimeoutMS: false,
 		},
 		{
 			desc:        "Watch",
@@ -196,7 +212,8 @@ func TestCSOT_maxTimeMS(t *testing.T) {
 				}
 				return err
 			},
-			sendsMaxTimeMS: true,
+			sendsMaxTimeMS:                   true,
+			preventsConnClosureWithTimeoutMS: false,
 			// Change Streams aren't supported on standalone topologies.
 			topologies: []mtest.TopologyKind{
 				mtest.ReplicaSet,
@@ -218,7 +235,8 @@ func TestCSOT_maxTimeMS(t *testing.T) {
 				var res []bson.D
 				return cursor.All(ctx, &res)
 			},
-			sendsMaxTimeMS: false,
+			sendsMaxTimeMS:                   false,
+			preventsConnClosureWithTimeoutMS: false,
 		},
 	}
 
@@ -348,56 +366,57 @@ func TestCSOT_maxTimeMS(t *testing.T) {
 					assertMaxTimeMSNotSet(mt, evt.Command)
 				}
 			})
-
-			opts := mtest.NewOptions().
-				// Blocking failpoints don't work on pre-4.2 and sharded
-				// clusters.
-				Topologies(mtest.Single, mtest.ReplicaSet).
-				MinServerVersion("4.2")
-			mt.RunOpts("prevents connection closure", opts, func(mt *mtest.T) {
-				if tc.setup != nil {
-					err := tc.setup(mt.Coll)
-					require.NoError(mt, err)
-				}
-
-				mt.SetFailPoint(failpoint.FailPoint{
-					ConfigureFailPoint: "failCommand",
-					Mode:               failpoint.ModeAlwaysOn,
-					Data: failpoint.Data{
-						FailCommands:    []string{tc.commandName},
-						BlockConnection: true,
-						// Note that some operations (currently Find and
-						// Aggregate) do not send maxTimeMS by default, meaning
-						// that the server will only respond after BlockTimeMS
-						// is elapsed. If the amount of time that the driver
-						// waits for responses after a timeout is significantly
-						// lower than BlockTimeMS, this test will start failing
-						// for those operations.
-						BlockTimeMS: 500,
-					},
-				})
-
-				tpm := eventtest.NewTestPoolMonitor()
-				mt.ResetClient(options.Client().
-					SetPoolMonitor(tpm.PoolMonitor))
-
-				// Run 5 operations that time out, then assert that no
-				// connections were closed.
-				for i := 0; i < 5; i++ {
-					ctx, cancel := context.WithTimeout(context.Background(), 15*time.Millisecond)
-					err := tc.operation(ctx, mt.Coll)
-					cancel()
-
-					if !mongo.IsTimeout(err) {
-						t.Logf("Operation %d returned a non-timeout error: %v", i, err)
+			if tc.preventsConnClosureWithTimeoutMS {
+				opts := mtest.NewOptions().
+					// Blocking failpoints don't work on pre-4.2 and sharded
+					// clusters.
+					Topologies(mtest.Single, mtest.ReplicaSet).
+					MinServerVersion("4.2")
+				mt.RunOpts("prevents connection closure", opts, func(mt *mtest.T) {
+					if tc.setup != nil {
+						err := tc.setup(mt.Coll)
+						require.NoError(mt, err)
 					}
-				}
 
-				closedEvents := tpm.Events(func(pe *event.PoolEvent) bool {
-					return pe.Type == event.ConnectionClosed
+					mt.SetFailPoint(failpoint.FailPoint{
+						ConfigureFailPoint: "failCommand",
+						Mode:               failpoint.ModeAlwaysOn,
+						Data: failpoint.Data{
+							FailCommands:    []string{tc.commandName},
+							BlockConnection: true,
+							// Note that some operations (currently Find and
+							// Aggregate) do not send maxTimeMS by default, meaning
+							// that the server will only respond after BlockTimeMS
+							// is elapsed. If the amount of time that the driver
+							// waits for responses after a timeout is significantly
+							// lower than BlockTimeMS, this test will start failing
+							// for those operations.
+							BlockTimeMS: 500,
+						},
+					})
+
+					tpm := eventtest.NewTestPoolMonitor()
+					mt.ResetClient(options.Client().
+						SetPoolMonitor(tpm.PoolMonitor))
+
+					// Run 5 operations that time out, then assert that no
+					// connections were closed.
+					for i := 0; i < 5; i++ {
+						ctx, cancel := context.WithTimeout(context.Background(), 15*time.Millisecond)
+						err := tc.operation(ctx, mt.Coll)
+						cancel()
+
+						if !mongo.IsTimeout(err) {
+							t.Logf("Operation %d returned a non-timeout error: %v", i, err)
+						}
+					}
+
+					closedEvents := tpm.Events(func(pe *event.PoolEvent) bool {
+						return pe.Type == event.ConnectionClosed
+					})
+					assert.Len(mt, closedEvents, 0, "expected no connection closed event")
 				})
-				assert.Len(mt, closedEvents, 0, "expected no connection closed event")
-			})
+			}
 		})
 	}
 
