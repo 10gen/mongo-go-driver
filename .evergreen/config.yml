@@ -1427,9 +1427,7 @@ tasks:
       - command: subprocess.exec
         params:
           binary: bash
-          env:
-            GO_VERSION: "1.18"
-          args: [*task-runner, build-compile-check]
+          args: [*task-runner, build-compile-check-all]
 
   # Build with the same Go version that we're using for tests.
   - name: build
@@ -2122,7 +2120,7 @@ buildvariants:
     tags: ["pullrequest"]
     display_name: "Compile Only Checks"
     run_on:
-      - rhel8.7-small
+      - ubuntu2204-small
     expansions:
       GO_DIST: "/opt/golang/go1.23"
     tasks:

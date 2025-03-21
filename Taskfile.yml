@@ -30,6 +30,8 @@ tasks:
 
   build-compile-check: bash etc/compile_check.sh
 
+  build-compile-check-all: bash etc/run-compile-check-test.sh
+
   build-aws-ecs-test: go build ${BUILD_TAGS} ./internal/cmd/testaws/main.go
 
   cross-compile: 
