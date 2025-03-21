@@ -2,7 +2,13 @@
 
 set -o errexit  # Exit the script with error if any of the commands fail
 
-FUZZTIME=10m
+# Default fuzztime to 10m.
+FUZZTIME=${FUZZTIME:-10m}
+
+if [ -z "$PROJECT_DIRECTORY" ]; then
+	echo "Please set PROJECT_DIRECTORY env variable."
+    exit 1
+fi
 
 # Change the working directory to the root of the mongo repository directory
 cd $PROJECT_DIRECTORY
@@ -21,7 +27,7 @@ do
 	# For each fuzz test in the file, run it for FUZZTIME.
 	for FUNC in ${FUNCS}
 	do
-		echo "Fuzzing \"${FUNC}\" in \"${FILE}\""
+		echo "Fuzzing \"${FUNC}\" in \"${FILE}\" for ${FUZZTIME}"
 
 		# Create a set of directories that are already in the subdirectories testdata/fuzz/$fuzzer corpus. This
 		# set will be used to differentiate between new and old corpus files.
@@ -35,7 +41,7 @@ do
 			done
 		fi
 
-		GOMAXPROCS=2 go test ${PARENTDIR} -run=${FUNC} -fuzz=${FUNC} -fuzztime=${FUZZTIME} || true
+		GOMAXPROCS=2 go test -race ${PARENTDIR} -run=${FUNC} -fuzz=^${FUNC}\$ -fuzztime=${FUZZTIME} || true
 
 		# Check if any new corpus files were generated for the fuzzer. If there are new corpus files, move them
 		# to $PROJECT_DIRECTORY/fuzz/$FUNC/* so they can be tarred up and uploaded to S3.
