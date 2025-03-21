@@ -97,7 +97,7 @@ func NewCursorFromDocuments(documents []interface{}, preloadedErr error, registr
 	for i, doc := range documents {
 		switch t := doc.(type) {
 		case nil:
-			return nil, ErrNilDocument
+			return nil, fmt.Errorf("error from document at index %d: %w", i, ErrNilDocument)
 		case []byte:
 			// Slight optimization so we'll just use MarshalBSON and not go through the codec machinery.
 			doc = bson.Raw(t)

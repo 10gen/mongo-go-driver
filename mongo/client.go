@@ -889,7 +889,7 @@ func (c *Client) BulkWrite(ctx context.Context, writes []ClientBulkWrite,
 	}
 
 	if len(writes) == 0 {
-		return nil, ErrEmptySlice
+		return nil, fmt.Errorf("error from writes: %w", ErrEmptySlice)
 	}
 	bwo, err := mongoutil.NewOptions(opts...)
 	if err != nil {

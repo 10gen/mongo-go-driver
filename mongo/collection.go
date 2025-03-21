@@ -193,7 +193,7 @@ func (coll *Collection) BulkWrite(ctx context.Context, models []WriteModel,
 	opts ...options.Lister[options.BulkWriteOptions]) (*BulkWriteResult, error) {
 
 	if len(models) == 0 {
-		return nil, ErrEmptySlice
+		return nil, fmt.Errorf("error from models: %w", ErrEmptySlice)
 	}
 
 	if ctx == nil {
@@ -221,9 +221,9 @@ func (coll *Collection) BulkWrite(ctx context.Context, models []WriteModel,
 
 	selector := makePinnedSelector(sess, coll.writeSelector)
 
-	for _, model := range models {
+	for i, model := range models {
 		if model == nil {
-			return nil, ErrNilDocument
+			return nil, fmt.Errorf("error from model at index %d: %w", i, ErrNilDocument)
 		}
 	}
 
@@ -407,10 +407,10 @@ func (coll *Collection) InsertMany(
 
 	dv := reflect.ValueOf(documents)
 	if dv.Kind() != reflect.Slice {
-		return nil, ErrNotSlice
+		return nil, fmt.Errorf("error from documents: %w", ErrNotSlice)
 	}
 	if dv.Len() == 0 {
-		return nil, ErrEmptySlice
+		return nil, fmt.Errorf("error from documents: %w", ErrEmptySlice)
 	}
 
 	docSlice := make([]interface{}, 0, dv.Len())
@@ -729,7 +729,7 @@ func (coll *Collection) UpdateByID(
 	opts ...options.Lister[options.UpdateOneOptions],
 ) (*UpdateResult, error) {
 	if id == nil {
-		return nil, ErrNilValue
+		return nil, fmt.Errorf("error from id: %w", ErrNilValue)
 	}
 	return coll.UpdateOne(ctx, bson.D{{"_id", id}}, update, opts...)
 }

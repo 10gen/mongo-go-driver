@@ -150,76 +150,76 @@ func TestCollection(t *testing.T) {
 		doc := bson.D{}
 
 		_, err := coll.InsertOne(bgCtx, nil)
-		assert.Equal(t, ErrNilDocument, err, "expected error %v, got %v", ErrNilDocument, err)
+		assert.True(t, errors.Is(err, ErrNilDocument), "expected error %v, got %v", ErrNilDocument, err)
 
 		_, err = coll.InsertMany(bgCtx, nil)
-		assert.Equal(t, ErrNotSlice, err, "expected error %v, got %v", ErrNotSlice, err)
+		assert.True(t, errors.Is(err, ErrNotSlice), "expected error %v, got %v", ErrNotSlice, err)
 
 		_, err = coll.InsertMany(bgCtx, []interface{}{})
-		assert.Equal(t, ErrEmptySlice, err, "expected error %v, got %v", ErrEmptySlice, err)
+		assert.True(t, errors.Is(err, ErrEmptySlice), "expected error %v, got %v", ErrEmptySlice, err)
 
 		_, err = coll.InsertMany(bgCtx, "x")
-		assert.Equal(t, ErrNotSlice, err, "expected error %v, got %v", ErrNotSlice, err)
+		assert.True(t, errors.Is(err, ErrNotSlice), "expected error %v, got %v", ErrNotSlice, err)
 
 		_, err = coll.DeleteOne(bgCtx, nil)
-		assert.Equal(t, ErrNilDocument, err, "expected error %v, got %v", ErrNilDocument, err)
+		assert.True(t, errors.Is(err, ErrNilDocument), "expected error %v, got %v", ErrNilDocument, err)
 
 		_, err = coll.DeleteMany(bgCtx, nil)
-		assert.Equal(t, ErrNilDocument, err, "expected error %v, got %v", ErrNilDocument, err)
+		assert.True(t, errors.Is(err, ErrNilDocument), "expected error %v, got %v", ErrNilDocument, err)
 
 		_, err = coll.UpdateOne(bgCtx, nil, doc)
-		assert.Equal(t, ErrNilDocument, err, "expected error %v, got %v", ErrNilDocument, err)
+		assert.True(t, errors.Is(err, ErrNilDocument), "expected error %v, got %v", ErrNilDocument, err)
 
 		_, err = coll.UpdateOne(bgCtx, doc, nil)
-		assert.Equal(t, ErrNilDocument, err, "expected error %v, got %v", ErrNilDocument, err)
+		assert.True(t, errors.Is(err, ErrNilDocument), "expected error %v, got %v", ErrNilDocument, err)
 
 		_, err = coll.UpdateMany(bgCtx, nil, doc)
-		assert.Equal(t, ErrNilDocument, err, "expected error %v, got %v", ErrNilDocument, err)
+		assert.True(t, errors.Is(err, ErrNilDocument), "expected error %v, got %v", ErrNilDocument, err)
 
 		_, err = coll.UpdateMany(bgCtx, doc, nil)
-		assert.Equal(t, ErrNilDocument, err, "expected error %v, got %v", ErrNilDocument, err)
+		assert.True(t, errors.Is(err, ErrNilDocument), "expected error %v, got %v", ErrNilDocument, err)
 
 		_, err = coll.ReplaceOne(bgCtx, nil, doc)
-		assert.Equal(t, ErrNilDocument, err, "expected error %v, got %v", ErrNilDocument, err)
+		assert.True(t, errors.Is(err, ErrNilDocument), "expected error %v, got %v", ErrNilDocument, err)
 
 		_, err = coll.ReplaceOne(bgCtx, doc, nil)
-		assert.Equal(t, ErrNilDocument, err, "expected error %v, got %v", ErrNilDocument, err)
+		assert.True(t, errors.Is(err, ErrNilDocument), "expected error %v, got %v", ErrNilDocument, err)
 
 		_, err = coll.CountDocuments(bgCtx, nil)
-		assert.Equal(t, ErrNilDocument, err, "expected error %v, got %v", ErrNilDocument, err)
+		assert.True(t, errors.Is(err, ErrNilDocument), "expected error %v, got %v", ErrNilDocument, err)
 
 		err = coll.Distinct(bgCtx, "x", nil).Err()
-		assert.Equal(t, ErrNilDocument, err, "expected error %v, got %v", ErrNilDocument, err)
+		assert.True(t, errors.Is(err, ErrNilDocument), "expected error %v, got %v", ErrNilDocument, err)
 
 		_, err = coll.Find(bgCtx, nil)
-		assert.Equal(t, ErrNilDocument, err, "expected error %v, got %v", ErrNilDocument, err)
+		assert.True(t, errors.Is(err, ErrNilDocument), "expected error %v, got %v", ErrNilDocument, err)
 
 		err = coll.FindOne(bgCtx, nil).Err()
-		assert.Equal(t, ErrNilDocument, err, "expected error %v, got %v", ErrNilDocument, err)
+		assert.True(t, errors.Is(err, ErrNilDocument), "expected error %v, got %v", ErrNilDocument, err)
 
 		err = coll.FindOneAndDelete(bgCtx, nil).Err()
-		assert.Equal(t, ErrNilDocument, err, "expected error %v, got %v", ErrNilDocument, err)
+		assert.True(t, errors.Is(err, ErrNilDocument), "expected error %v, got %v", ErrNilDocument, err)
 
 		err = coll.FindOneAndReplace(bgCtx, nil, doc).Err()
-		assert.Equal(t, ErrNilDocument, err, "expected error %v, got %v", ErrNilDocument, err)
+		assert.True(t, errors.Is(err, ErrNilDocument), "expected error %v, got %v", ErrNilDocument, err)
 
 		err = coll.FindOneAndReplace(bgCtx, doc, nil).Err()
-		assert.Equal(t, ErrNilDocument, err, "expected error %v, got %v", ErrNilDocument, err)
+		assert.True(t, errors.Is(err, ErrNilDocument), "expected error %v, got %v", ErrNilDocument, err)
 
 		err = coll.FindOneAndUpdate(bgCtx, nil, doc).Err()
-		assert.Equal(t, ErrNilDocument, err, "expected error %v, got %v", ErrNilDocument, err)
+		assert.True(t, errors.Is(err, ErrNilDocument), "expected error %v, got %v", ErrNilDocument, err)
 
 		err = coll.FindOneAndUpdate(bgCtx, doc, nil).Err()
-		assert.Equal(t, ErrNilDocument, err, "expected error %v, got %v", ErrNilDocument, err)
+		assert.True(t, errors.Is(err, ErrNilDocument), "expected error %v, got %v", ErrNilDocument, err)
 
 		_, err = coll.BulkWrite(bgCtx, nil)
-		assert.Equal(t, ErrEmptySlice, err, "expected error %v, got %v", ErrEmptySlice, err)
+		assert.True(t, errors.Is(err, ErrEmptySlice), "expected error %v, got %v", ErrEmptySlice, err)
 
 		_, err = coll.BulkWrite(bgCtx, []WriteModel{})
-		assert.Equal(t, ErrEmptySlice, err, "expected error %v, got %v", ErrEmptySlice, err)
+		assert.True(t, errors.Is(err, ErrEmptySlice), "expected error %v, got %v", ErrEmptySlice, err)
 
 		_, err = coll.BulkWrite(bgCtx, []WriteModel{nil})
-		assert.Equal(t, ErrNilDocument, err, "expected error %v, got %v", ErrNilDocument, err)
+		assert.True(t, errors.Is(err, ErrNilDocument), "expected error %v, got %v", ErrNilDocument, err)
 
 		aggErr := errors.New("can only marshal slices and arrays into aggregation pipelines, but got invalid")
 		_, err = coll.Aggregate(bgCtx, nil)

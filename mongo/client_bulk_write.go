@@ -50,11 +50,11 @@ type clientBulkWrite struct {
 
 func (bw *clientBulkWrite) execute(ctx context.Context) error {
 	if len(bw.writePairs) == 0 {
-		return ErrEmptySlice
+		return fmt.Errorf("error from writes: %w", ErrEmptySlice)
 	}
-	for _, m := range bw.writePairs {
+	for i, m := range bw.writePairs {
 		if m.model == nil {
-			return ErrNilDocument
+			return fmt.Errorf("error from model at index %d: %w", i, ErrNilDocument)
 		}
 	}
 	batches := &modelBatches{

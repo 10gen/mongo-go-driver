@@ -81,10 +81,10 @@ func TestClient(t *testing.T) {
 		assert.Equal(t, watchErr, err, "expected error %v, got %v", watchErr, err)
 
 		_, err = client.ListDatabases(bgCtx, nil)
-		assert.Equal(t, ErrNilDocument, err, "expected error %v, got %v", ErrNilDocument, err)
+		assert.True(t, errors.Is(err, ErrNilDocument), "expected error %v, got %v", ErrNilDocument, err)
 
 		_, err = client.ListDatabaseNames(bgCtx, nil)
-		assert.Equal(t, ErrNilDocument, err, "expected error %v, got %v", ErrNilDocument, err)
+		assert.True(t, errors.Is(err, ErrNilDocument), "expected error %v, got %v", ErrNilDocument, err)
 	})
 	t.Run("read preference", func(t *testing.T) {
 		t.Run("absent", func(t *testing.T) {
