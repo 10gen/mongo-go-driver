@@ -57,6 +57,7 @@ functions:
   handle-test-artifacts:
     - command: gotest.parse_files
       params:
+        optional_output: "true"
         files:
           - "src/go.mongodb.org/mongo-driver/*.suite"
     - command: ec2.assume_role
@@ -1932,7 +1933,10 @@ task_groups:
   - name: testoidc_task_group
     setup_group_can_fail_task: true
     setup_group_timeout_secs: 1800
-    teardown_task_can_fail_task: true
+    # TODO(DRIVERS-3141): Uncomment the following line once the teardown bug is
+    # fixed. See DRIVERS-3141 for more context.
+    #
+    # teardown_task_can_fail_task: true
     teardown_group_timeout_secs: 180 # 3 minutes (max allowed time)
     setup_group:
       - func: setup-system

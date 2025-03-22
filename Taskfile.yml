@@ -199,7 +199,7 @@ tasks:
 
   evg-test-deployed-lambda-aws: bash ${DRIVERS_TOOLS}/.evergreen/aws_lambda/run-deployed-lambda-aws-tests.sh
 
-  evg-gather-test-suites: find . -name \*.suite | xargs tar czf test_suite.tgz
+  evg-gather-test-suites: find . -name \*.suite | xargs tar czf test_suite.tgz || true
 
   build-kms-test: go build ${BUILD_TAGS} ./internal/cmd/testkms
 

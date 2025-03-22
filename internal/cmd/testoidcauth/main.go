@@ -8,6 +8,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -1781,14 +1782,16 @@ func machine51azureWithNoUsername() error {
 
 func machine52azureWithBadUsername() error {
 	opts := options.Client().ApplyURI(uriSingle)
-	cred := options.Credential{
-		AuthMechanism: "MONGODB-OIDC",
-		Username:      "bad",
-	}
-	opts.SetAuth(cred)
+
 	if opts == nil {
 		return fmt.Errorf("machine_5_2: failed parsing uri: %q", uriSingle)
 	}
+	if opts.Auth == nil || opts.Auth.AuthMechanism != "MONGODB-OIDC" {
+		return errors.New("machine_5_2: expected URI to contain MONGODB-OIDC auth information")
+	}
+
+	opts.Auth.Username = "bad"
+
 	client, err := mongo.Connect(opts)
 	if err != nil {
 		return fmt.Errorf("machine_5_2: failed connecting client: %v", err)
