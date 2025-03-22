@@ -231,18 +231,30 @@ func TestCollection(t *testing.T) {
 				mt.Run(tc.name, func(mt *mtest.T) {
 					res, err := mt.Coll.InsertMany(context.Background(), docs, options.InsertMany().SetOrdered(tc.ordered))
 
-					assert.Equal(mt, tc.numInserted, len(res.InsertedIDs), "expected %v inserted IDs, got %v", tc.numInserted, len(res.InsertedIDs))
-					assert.Equal(mt, id, res.InsertedIDs[0], "expected inserted ID %v, got %v", id, res.InsertedIDs[0])
-					if tc.numInserted > 1 {
-						assert.NotNil(mt, res.InsertedIDs[1], "expected ID but got nil")
-					}
-
 					we, ok := err.(mongo.BulkWriteException)
 					assert.True(mt, ok, "expected error type %T, got %T", mongo.BulkWriteException{}, err)
 					numErrors := len(we.WriteErrors)
 					assert.Equal(mt, tc.numErrors, numErrors, "expected %v write errors, got %v", tc.numErrors, numErrors)
 					gotCode := we.WriteErrors[0].Code
 					assert.Equal(mt, errorDuplicateKey, gotCode, "expected error code %v, got %v", errorDuplicateKey, gotCode)
+
+					if len(res.InsertedIDs) == 0 {
+						mt.Fatal("Expected at least one inserted ID")
+					}
+
+					assert.Equal(mt,
+						tc.numInserted,
+						len(res.InsertedIDs),
+						"expected %v inserted IDs, got %v",
+						tc.numInserted,
+						len(res.InsertedIDs))
+					assert.Equal(mt,
+						id,
+						res.InsertedIDs[0],
+						"expected ID to match")
+					if tc.numInserted > 1 {
+						assert.NotNil(mt, res.InsertedIDs[1], "expected ID but got nil")
+					}
 				})
 			}
 		})
