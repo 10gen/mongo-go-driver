@@ -118,8 +118,7 @@ func (db *Database) Collection(name string, opts ...options.Lister[options.Colle
 	return newCollection(db, name, opts...)
 }
 
-// Aggregate executes an aggregate command the database. This requires MongoDB version >= 3.6 and driver version >=
-// 1.1.0.
+// Aggregate executes an aggregate command the database.
 //
 // The pipeline parameter must be a slice of documents, each representing an aggregation stage. The pipeline
 // cannot be nil but can be empty. The stage documents must all be non-nil. For a pipeline of bson.D documents, the

@@ -528,11 +528,6 @@ func TestIndexView(t *testing.T) {
 					Unique:             nil,
 				},
 			}
-			if mtest.CompareServerVersions(mtest.ServerVersion(), "3.4") < 0 {
-				for _, expectedSpec := range expectedSpecs {
-					expectedSpec.Version = 1
-				}
-			}
 
 			specs, err := mt.Coll.Indexes().ListSpecifications(context.Background())
 			assert.Nil(mt, err, "ListSpecifications error: %v", err)

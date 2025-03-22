@@ -52,11 +52,11 @@ func (f *FindOptionsBuilder) List() []func(*FindOptions) error {
 	return f.Opts
 }
 
-// SetAllowDiskUse sets the value for the AllowDiskUse field. AllowDiskUse specifies whether the
-// server can write temporary data to disk while executing the Find operation. This option is only
-// valid for MongoDB versions >= 4.4. Server versions >= 3.2 will report an error if this option
-// is specified. For server versions < 3.2, the driver will return a client-side error if this
-// option is specified. The default value is false.
+// SetAllowDiskUse sets the value for the AllowDiskUse field. AllowDiskUse
+// specifies whether the server can write temporary data to disk while executing
+// the Find operation. This option is only valid for MongoDB versions >= 4.4.
+// Server versions < 4.4 will return an error if this option is specified. The
+// default value is false.
 func (f *FindOptionsBuilder) SetAllowDiskUse(b bool) *FindOptionsBuilder {
 	f.Opts = append(f.Opts, func(opts *FindOptions) error {
 		opts.AllowDiskUse = &b
@@ -86,10 +86,10 @@ func (f *FindOptionsBuilder) SetBatchSize(i int32) *FindOptionsBuilder {
 	return f
 }
 
-// SetCollation sets the value for the Collation field. Collation specifies a collation to use for
-// string comparisons during the operation. This option is only valid for MongoDB versions >= 3.4.
-// For previous server versions, the driver will return an error if this option is used. The
-// default value is nil, which means the default collation of the collection will be used.
+// SetCollation sets the value for the Collation field. Collation specifies a
+// collation to use for string comparisons during the operation. The default
+// value is nil, which means the default collation of the collection will be
+// used.
 func (f *FindOptionsBuilder) SetCollation(collation *Collation) *FindOptionsBuilder {
 	f.Opts = append(f.Opts, func(opts *FindOptions) error {
 		opts.Collation = collation
@@ -167,11 +167,11 @@ func (f *FindOptionsBuilder) SetMax(max interface{}) *FindOptionsBuilder {
 	return f
 }
 
-// SetMaxAwaitTime sets the value for the MaxAwaitTime field. MaxAwaitTime is the maximum amount of
-// time that the server should wait for new documents to satisfy a tailable cursor query. This
-// option is only valid for tailable await cursors (see the CursorType option for more information)
-// and MongoDB versions >= 3.2. For other cursor types or previous server versions, this option
-// is ignored.
+// SetMaxAwaitTime sets the value for the MaxAwaitTime field. MaxAwaitTime is
+// the maximum amount of time that the server should wait for new documents to
+// satisfy a tailable cursor query. This option is only valid for tailable await
+// cursors (see the CursorType option for more information). For other cursor
+// types, this option is ignored.
 func (f *FindOptionsBuilder) SetMaxAwaitTime(d time.Duration) *FindOptionsBuilder {
 	f.Opts = append(f.Opts, func(opts *FindOptions) error {
 		opts.MaxAwaitTime = &d
@@ -314,10 +314,9 @@ func (f *FindOneOptionsBuilder) SetAllowPartialResults(b bool) *FindOneOptionsBu
 	return f
 }
 
-// SetCollation sets the value for the Collation field. Specifies a collation to use for string
-// comparisons during the operation. This option is only valid for MongoDB versions >= 3.4. For
-// previous server versions, the driver will return an error if this option is used. The
-// default value is nil, which means the default collation of the collection will be used.
+// SetCollation sets the value for the Collation field. Specifies a collation to
+// use for string comparisons during the operation. The default value is nil,
+// which means the default collation of the collection will be used.
 func (f *FindOneOptionsBuilder) SetCollation(collation *Collation) *FindOneOptionsBuilder {
 	f.Opts = append(f.Opts, func(opts *FindOneOptions) error {
 		opts.Collation = collation
@@ -471,8 +470,7 @@ func (f *FindOneAndReplaceOptionsBuilder) List() []func(*FindOneAndReplaceOption
 }
 
 // SetBypassDocumentValidation sets the value for the BypassDocumentValidation field. If true, writes
-// executed as part of the operation will opt out of document-level validation on the server. This
-// option is valid for MongoDB versions >= 3.2 and is ignored for previous server versions. The
+// executed as part of the operation will opt out of document-level validation on the server. The
 // default value is false. See https://www.mongodb.com/docs/manual/core/schema-validation/ for more
 // information about document validation.
 func (f *FindOneAndReplaceOptionsBuilder) SetBypassDocumentValidation(b bool) *FindOneAndReplaceOptionsBuilder {
@@ -485,10 +483,9 @@ func (f *FindOneAndReplaceOptionsBuilder) SetBypassDocumentValidation(b bool) *F
 	return f
 }
 
-// SetCollation sets the value for the Collation field. Specifies a collation to use for string
-// comparisons during the operation. This option is only valid for MongoDB versions >= 3.4.
-// For previous server versions, the driver will return an error if this option is used. The
-// default value is nil, which means the default collation of the collection will be used.
+// SetCollation sets the value for the Collation field. Specifies a collation to
+// use for string comparisons during the operation. The default value is nil,
+// which means the default collation of the collection will be used.
 func (f *FindOneAndReplaceOptionsBuilder) SetCollation(collation *Collation) *FindOneAndReplaceOptionsBuilder {
 	f.Opts = append(f.Opts, func(opts *FindOneAndReplaceOptions) error {
 		opts.Collation = collation
@@ -633,11 +630,10 @@ func (f *FindOneAndUpdateOptionsBuilder) List() []func(*FindOneAndUpdateOptions)
 	return f.Opts
 }
 
-// SetArrayFilters sets the value for the ArrayFilters field. ArrayFilters is a set of filters
-// specifying to which array elements an update should apply. This option is only valid for
-// MongoDB versions >= 3.6. For previous server versions, the driver will return an error if
-// this option is used. The default value is nil, which means the update will apply to all
-// array elements.
+// SetArrayFilters sets the value for the ArrayFilters field. ArrayFilters is a
+// set of filters specifying to which array elements an update should apply. The
+// default value is nil, which means the update will apply to all array
+// elements.
 func (f *FindOneAndUpdateOptionsBuilder) SetArrayFilters(filters []interface{}) *FindOneAndUpdateOptionsBuilder {
 	f.Opts = append(f.Opts, func(opts *FindOneAndUpdateOptions) error {
 		opts.ArrayFilters = filters
@@ -650,7 +646,6 @@ func (f *FindOneAndUpdateOptionsBuilder) SetArrayFilters(filters []interface{}) 
 
 // SetBypassDocumentValidation sets the value for the BypassDocumentValidation field. If true,
 // writes executed as part of the operation will opt out of document-level validation on the server.
-// This option is valid for MongoDB versions >= 3.2 and is ignored for previous server versions.
 // The default value is false. See https://www.mongodb.com/docs/manual/core/schema-validation/
 // for more information about document validation.
 func (f *FindOneAndUpdateOptionsBuilder) SetBypassDocumentValidation(b bool) *FindOneAndUpdateOptionsBuilder {
@@ -663,10 +658,9 @@ func (f *FindOneAndUpdateOptionsBuilder) SetBypassDocumentValidation(b bool) *Fi
 	return f
 }
 
-// SetCollation sets the value for the Collation field. Specifies a collation to use for string
-// comparisons during the operation. This option is only valid for MongoDB versions >= 3.4. For
-// previous server versions, the driver will return an error if this option is used. The default
-// value is nil, which means the default collation of the collection will be used.
+// SetCollation sets the value for the Collation field. Specifies a collation to
+// use for string comparisons during the operation. The default value is nil,
+// which means the default collation of the collection will be used.
 func (f *FindOneAndUpdateOptionsBuilder) SetCollation(collation *Collation) *FindOneAndUpdateOptionsBuilder {
 	f.Opts = append(f.Opts, func(opts *FindOneAndUpdateOptions) error {
 		opts.Collation = collation
@@ -807,10 +801,9 @@ func (f *FindOneAndDeleteOptionsBuilder) List() []func(*FindOneAndDeleteOptions)
 	return f.Opts
 }
 
-// SetCollation sets the value for the Collation field. Specifies a collation to use for string
-// comparisons during the operation. This option is only valid for MongoDB versions >= 3.4.
-// For previous server versions, the driver will return an error if this option is used. The
-// default value is nil, which means the default collation of the collection will be used.
+// SetCollation sets the value for the Collation field. Specifies a collation to
+// use for string comparisons during the operation. The default value is nil,
+// which means the default collation of the collection will be used.
 func (f *FindOneAndDeleteOptionsBuilder) SetCollation(collation *Collation) *FindOneAndDeleteOptionsBuilder {
 	f.Opts = append(f.Opts, func(opts *FindOneAndDeleteOptions) error {
 		opts.Collation = collation

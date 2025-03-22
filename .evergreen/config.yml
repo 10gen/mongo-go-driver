@@ -1722,10 +1722,6 @@ axes:
         display_name: "4.0"
         variables:
           VERSION: "4.0"
-      - id: "3.6"
-        display_name: "3.6"
-        variables:
-          VERSION: "3.6"
       - id: "rapid"
         display_name: "rapid"
         variables:
@@ -2176,19 +2172,6 @@ buildvariants:
       GO_DIST: "/opt/golang/go1.23"
     tasks:
       - name: ".goleak"
-
-  - matrix_name: "tests-rhel-36-with-zlib-support"
-    tags: ["pullrequest"]
-    matrix_spec: { version: ["3.6"], os-ssl-32: ["rhel87-64"] }
-    display_name: "${version} ${os-ssl-32}"
-    tasks:
-      - name: ".test !.enterprise-auth !.snappy !.zstd"
-
-  - matrix_name: "tests-windows-36-with-zlib-support"
-    matrix_spec: { version: ["3.6"], os-ssl-32: ["windows-64"] }
-    display_name: "${version} ${os-ssl-32}"
-    tasks:
-      - name: ".test !.enterprise-auth !.snappy !.zstd"
 
   - matrix_name: "tests-rhel-40-with-snappy-support"
     tags: ["pullrequest"]

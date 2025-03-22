@@ -35,10 +35,9 @@ func (co *CountOptionsBuilder) List() []func(*CountOptions) error {
 	return co.Opts
 }
 
-// SetCollation sets the value for the Collation field. Specifies a collation to use for string comparisons
-// during the operation. This option is only valid for MongoDB versions >= 3.4. For previous server versions,
-// the driver will return an error if this option is used. The default value is nil, which means the default
-// collation of the collection will be used.
+// SetCollation sets the value for the Collation field. Specifies a collation to
+// use for string comparisons during the operation. The default value is nil,
+// which means the default collation of the collection will be used.
 func (co *CountOptionsBuilder) SetCollation(c *Collation) *CountOptionsBuilder {
 	co.Opts = append(co.Opts, func(opts *CountOptions) error {
 		opts.Collation = c

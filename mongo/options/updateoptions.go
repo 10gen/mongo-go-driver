@@ -38,10 +38,10 @@ func (uo *UpdateOneOptionsBuilder) List() []func(*UpdateOneOptions) error {
 	return uo.Opts
 }
 
-// SetArrayFilters sets the value for the ArrayFilters field. ArrayFilters is a set of filters
-// specifying to which array elements an update should apply. This option is only valid for MongoDB
-// versions >= 3.6. For previous server versions, the driver will return an error if this option is
-// used. The default value is nil, which means the update will apply to all array elements.
+// SetArrayFilters sets the value for the ArrayFilters field. ArrayFilters is a
+// set of filters specifying to which array elements an update should apply. The
+// default value is nil, which means the update will apply to all array
+// elements.
 func (uo *UpdateOneOptionsBuilder) SetArrayFilters(af []interface{}) *UpdateOneOptionsBuilder {
 	uo.Opts = append(uo.Opts, func(opts *UpdateOneOptions) error {
 		opts.ArrayFilters = af
@@ -54,7 +54,6 @@ func (uo *UpdateOneOptionsBuilder) SetArrayFilters(af []interface{}) *UpdateOneO
 
 // SetBypassDocumentValidation sets the value for the BypassDocumentValidation field. If true,
 // writes executed as part of the operation will opt out of document-level validation on the server.
-// This option is valid for MongoDB versions >= 3.2 and is ignored for previous server versions.
 // The default value is false. See https://www.mongodb.com/docs/manual/core/schema-validation/ for
 // more information about document validation.
 func (uo *UpdateOneOptionsBuilder) SetBypassDocumentValidation(b bool) *UpdateOneOptionsBuilder {
@@ -67,10 +66,9 @@ func (uo *UpdateOneOptionsBuilder) SetBypassDocumentValidation(b bool) *UpdateOn
 	return uo
 }
 
-// SetCollation sets the value for the Collation field. Specifies a collation to use for string
-// comparisons during the operation. This option is only valid for MongoDB versions >= 3.4. For
-// previous server versions, the driver will return an error if this option is used. The default
-// value is nil, which means the default collation of the collection will be used.
+// SetCollation sets the value for the Collation field. Specifies a collation to
+// use for string comparisons during the operation. The default value is nil,
+// which means the default collation of the collection will be used.
 func (uo *UpdateOneOptionsBuilder) SetCollation(c *Collation) *UpdateOneOptionsBuilder {
 	uo.Opts = append(uo.Opts, func(opts *UpdateOneOptions) error {
 		opts.Collation = c
@@ -94,13 +92,14 @@ func (uo *UpdateOneOptionsBuilder) SetComment(comment interface{}) *UpdateOneOpt
 	return uo
 }
 
-// SetHint sets the value for the Hint field. Specifies the index to use for the operation. This
-// should either be the index name as a string or the index specification as a document. This
-// option is only valid for MongoDB versions >= 4.2. Server versions >= 3.4 will return an error
-// if this option is specified. For server versions < 3.4, the driver will return a client-side
-// error if this option is specified. The driver will return an error if this option is specified
-// during an unacknowledged write operation. The driver will return an error if the hint parameter
-// is a multi-key map. The default value is nil, which means that no hint will be sent.
+// SetHint sets the value for the Hint field. Specifies the index to use for the
+// operation. This should either be the index name as a string or the index
+// specification as a document. This option is only valid for MongoDB versions
+// >= 4.2. Server versions < 4.2 will return an error if this option is
+// specified. The driver will return an error if this option is specified during
+// an unacknowledged write operation. The driver will return an error if the
+// hint parameter is a multi-key map. The default value is nil, which means that
+// no hint will be sent.
 func (uo *UpdateOneOptionsBuilder) SetHint(h interface{}) *UpdateOneOptionsBuilder {
 	uo.Opts = append(uo.Opts, func(opts *UpdateOneOptions) error {
 		opts.Hint = h
@@ -184,10 +183,10 @@ func (uo *UpdateManyOptionsBuilder) List() []func(*UpdateManyOptions) error {
 	return uo.Opts
 }
 
-// SetArrayFilters sets the value for the ArrayFilters field. ArrayFilters is a set of filters
-// specifying to which array elements an update should apply. This option is only valid for MongoDB
-// versions >= 3.6. For previous server versions, the driver will return an error if this option is
-// used. The default value is nil, which means the update will apply to all array elements.
+// SetArrayFilters sets the value for the ArrayFilters field. ArrayFilters is a
+// set of filters specifying to which array elements an update should apply. The
+// default value is nil, which means the update will apply to all array
+// elements.
 func (uo *UpdateManyOptionsBuilder) SetArrayFilters(af []interface{}) *UpdateManyOptionsBuilder {
 	uo.Opts = append(uo.Opts, func(opts *UpdateManyOptions) error {
 		opts.ArrayFilters = af
@@ -200,7 +199,6 @@ func (uo *UpdateManyOptionsBuilder) SetArrayFilters(af []interface{}) *UpdateMan
 
 // SetBypassDocumentValidation sets the value for the BypassDocumentValidation field. If true,
 // writes executed as part of the operation will opt out of document-level validation on the server.
-// This option is valid for MongoDB versions >= 3.2 and is ignored for previous server versions.
 // The default value is false. See https://www.mongodb.com/docs/manual/core/schema-validation/ for
 // more information about document validation.
 func (uo *UpdateManyOptionsBuilder) SetBypassDocumentValidation(b bool) *UpdateManyOptionsBuilder {
@@ -213,10 +211,9 @@ func (uo *UpdateManyOptionsBuilder) SetBypassDocumentValidation(b bool) *UpdateM
 	return uo
 }
 
-// SetCollation sets the value for the Collation field. Specifies a collation to use for string
-// comparisons during the operation. This option is only valid for MongoDB versions >= 3.4. For
-// previous server versions, the driver will return an error if this option is used. The default
-// value is nil, which means the default collation of the collection will be used.
+// SetCollation sets the value for the Collation field. Specifies a collation to
+// use for string comparisons during the operation. The default value is nil,
+// which means the default collation of the collection will be used.
 func (uo *UpdateManyOptionsBuilder) SetCollation(c *Collation) *UpdateManyOptionsBuilder {
 	uo.Opts = append(uo.Opts, func(opts *UpdateManyOptions) error {
 		opts.Collation = c
@@ -240,13 +237,14 @@ func (uo *UpdateManyOptionsBuilder) SetComment(comment interface{}) *UpdateManyO
 	return uo
 }
 
-// SetHint sets the value for the Hint field. Specifies the index to use for the operation. This
-// should either be the index name as a string or the index specification as a document. This
-// option is only valid for MongoDB versions >= 4.2. Server versions >= 3.4 will return an error
-// if this option is specified. For server versions < 3.4, the driver will return a client-side
-// error if this option is specified. The driver will return an error if this option is specified
-// during an unacknowledged write operation. The driver will return an error if the hint parameter
-// is a multi-key map. The default value is nil, which means that no hint will be sent.
+// SetHint sets the value for the Hint field. Specifies the index to use for the
+// operation. This should either be the index name as a string or the index
+// specification as a document. This option is only valid for MongoDB versions
+// >= 4.2. Server versions < 4.2 will return an error if this option is
+// specified. The driver will return an error if this option is specified during
+// an unacknowledged write operation. The driver will return an error if the
+// hint parameter is a multi-key map. The default value is nil, which means that
+// no hint will be sent.
 func (uo *UpdateManyOptionsBuilder) SetHint(h interface{}) *UpdateManyOptionsBuilder {
 	uo.Opts = append(uo.Opts, func(opts *UpdateManyOptions) error {
 		opts.Hint = h

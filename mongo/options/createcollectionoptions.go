@@ -193,9 +193,8 @@ func (c *CreateCollectionOptionsBuilder) SetCapped(capped bool) *CreateCollectio
 	return c
 }
 
-// SetCollation sets the value for the Collation field. Specifies the default collation for the new
-// collection. This option is only valid for MongoDB versions >= 3.4. For previous server versions,
-// the driver will return an error if this option is used. The default value is nil.
+// SetCollation sets the value for the Collation field. Specifies the default
+// collation for the new collection. The default value is nil.
 func (c *CreateCollectionOptionsBuilder) SetCollation(collation *Collation) *CreateCollectionOptionsBuilder {
 	c.Opts = append(c.Opts, func(opts *CreateCollectionOptions) error {
 		opts.Collation = collation
@@ -222,9 +221,9 @@ func (c *CreateCollectionOptionsBuilder) SetChangeStreamPreAndPostImages(csppi i
 	return c
 }
 
-// SetDefaultIndexOptions sets the value for the DefaultIndexOptions field. Specifies a default
-// configuration for indexes on the collection. This option is only valid for MongoDB versions
-// >= 3.4. The default value is nil, meaning indexes will be configured using server defaults.
+// SetDefaultIndexOptions sets the value for the DefaultIndexOptions field.
+// Specifies a default configuration for indexes on the collection. The default
+// value is nil, meaning indexes will be configured using server defaults.
 func (c *CreateCollectionOptionsBuilder) SetDefaultIndexOptions(iopts *DefaultIndexOptionsBuilder) *CreateCollectionOptionsBuilder {
 	c.Opts = append(c.Opts, func(opts *CreateCollectionOptions) error {
 		opts.DefaultIndexOptions = iopts
@@ -278,7 +277,7 @@ func (c *CreateCollectionOptionsBuilder) SetStorageEngine(storageEngine interfac
 // SetValidationAction sets the value for the ValidationAction field. Specifies what should happen if a
 // document being inserted does not pass validation. Valid values are "error" and "warn". See
 // https://www.mongodb.com/docs/manual/core/schema-validation/#accept-or-reject-invalid-documents for more
-// information. This option is only valid for MongoDB versions >= 3.2. The default value is "error".
+// information. The default value is "error".
 func (c *CreateCollectionOptionsBuilder) SetValidationAction(action string) *CreateCollectionOptionsBuilder {
 	c.Opts = append(c.Opts, func(opts *CreateCollectionOptions) error {
 		opts.ValidationAction = &action
@@ -292,7 +291,7 @@ func (c *CreateCollectionOptionsBuilder) SetValidationAction(action string) *Cre
 // SetValidationLevel sets the value for the ValidationLevel field. Specifies how strictly the server applies
 // validation rules to existing documents in the collection during update operations. Valid values are "off",
 // "strict", and "moderate". See https://www.mongodb.com/docs/manual/core/schema-validation/#existing-documents
-// for more information. This option is only valid for MongoDB versions >= 3.2. The default value is "strict".
+// for more information. The default value is "strict".
 func (c *CreateCollectionOptionsBuilder) SetValidationLevel(level string) *CreateCollectionOptionsBuilder {
 	c.Opts = append(c.Opts, func(opts *CreateCollectionOptions) error {
 		opts.ValidationLevel = &level
@@ -305,8 +304,7 @@ func (c *CreateCollectionOptionsBuilder) SetValidationLevel(level string) *Creat
 
 // SetValidator sets the value for the Validator field. Sets a document specifying validation rules for the
 // collection. See https://www.mongodb.com/docs/manual/core/schema-validation/ for more information about
-// schema validation. This option is only valid for MongoDB versions >= 3.2. The default value is nil,
-// meaning no validator will be used for the collection.
+// schema validation. The default value is nil, meaning no validator will be used for the collection.
 func (c *CreateCollectionOptionsBuilder) SetValidator(validator interface{}) *CreateCollectionOptionsBuilder {
 	c.Opts = append(c.Opts, func(opts *CreateCollectionOptions) error {
 		opts.Validator = validator
@@ -402,9 +400,8 @@ func (c *CreateViewOptionsBuilder) List() []func(*CreateViewOptions) error {
 	return c.Opts
 }
 
-// SetCollation sets the value for the Collation field. Specifies the default collation for the new
-// collection. This option is only valid for MongoDB versions >= 3.4. For previous server versions,
-// the driver will return an error if this option is used. The default value is nil.
+// SetCollation sets the value for the Collation field. Specifies the default
+// collation for the new collection. The default value is nil.
 func (c *CreateViewOptionsBuilder) SetCollation(collation *Collation) *CreateViewOptionsBuilder {
 	c.Opts = append(c.Opts, func(opts *CreateViewOptions) error {
 		opts.Collation = collation

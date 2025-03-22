@@ -33,11 +33,9 @@ func (do *DistinctOptionsBuilder) List() []func(*DistinctOptions) error {
 	return do.Opts
 }
 
-// SetCollation sets the value for the Collation field. Specifies a collation to use
-// for string comparisons during the operation. This option is only valid for MongoDB
-// versions >= 3.4. For previous server versions, the driver will return an error if
-// this option is used. The default value is nil, which means the default collation
-// of the collection will be used.
+// SetCollation sets the value for the Collation field. Specifies a collation to
+// use for string comparisons during the operation. The default value is nil,
+// which means the default collation of the collection will be used.
 func (do *DistinctOptionsBuilder) SetCollation(c *Collation) *DistinctOptionsBuilder {
 	do.Opts = append(do.Opts, func(opts *DistinctOptions) error {
 		opts.Collation = c

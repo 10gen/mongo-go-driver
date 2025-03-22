@@ -686,9 +686,9 @@ func (c *ClientOptions) SetAuth(auth Credential) *ClientOptions {
 
 // SetCompressors sets the compressors that can be used when communicating with a server. Valid values are:
 //
-// 1. "snappy" - requires server version >= 3.4
+// 1. "snappy"
 //
-// 2. "zlib" - requires server version >= 3.6
+// 2. "zlib"
 //
 // 3. "zstd" - requires server version >= 4.2, and driver version >= 1.2.0 with cgo support enabled or driver
 // version >= 1.3.0 without cgo.
@@ -920,9 +920,8 @@ func (c *ClientOptions) SetReplicaSet(s string) *ClientOptions {
 // DeleteManyModel instances to be considered retryable. Unacknowledged writes will not be retried, even if this option
 // is set to true.
 //
-// This option requires server version >= 3.6 and a replica set or sharded cluster and will be ignored for any other
-// cluster type. This can also be set through the "retryWrites" URI option (e.g. "retryWrites=true"). The default is
-// true.
+// This option only works on a replica set or sharded cluster and will be ignored for any other cluster type.
+// This can also be set through the "retryWrites" URI option (e.g. "retryWrites=true"). The default is true.
 func (c *ClientOptions) SetRetryWrites(b bool) *ClientOptions {
 	c.RetryWrites = &b
 
@@ -936,7 +935,7 @@ func (c *ClientOptions) SetRetryWrites(b bool) *ClientOptions {
 // EstimatedDocumentCount, Watch (for Client, Database, and Collection), ListCollections, and ListDatabases. Note that
 // operations run through RunCommand are not retried.
 //
-// This option requires server version >= 3.6 and driver version >= 1.1.0. The default is true.
+// The default is true.
 func (c *ClientOptions) SetRetryReads(b bool) *ClientOptions {
 	c.RetryReads = &b
 

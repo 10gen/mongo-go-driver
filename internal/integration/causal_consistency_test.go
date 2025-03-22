@@ -201,40 +201,6 @@ func TestCausalConsistency_Supported(t *testing.T) {
 	})
 }
 
-func TestCausalConsistency_NotSupported(t *testing.T) {
-	// use RunOnBlock instead of mtest.NewOptions().MaxServerVersion("3.4").Topologies(mtest.Single) because
-	// these tests should be run on servers <= 3.4 OR standalones
-	rob := []mtest.RunOnBlock{
-		{MaxServerVersion: "3.4"},
-		{Topology: []mtest.TopologyKind{mtest.Single}},
-	}
-	mt := mtest.New(t, mtest.NewOptions().RunOn(rob...).CreateClient(false))
-
-	mt.Run("afterClusterTime not included", func(mt *mtest.T) {
-		// a read in a causally consistent session does not include afterClusterTime in a deployment that does not
-		// support cluster times
-
-		sessOpts := options.Session().SetCausalConsistency(true)
-		_ = mt.Client.UseSessionWithOptions(context.Background(), sessOpts, func(ctx context.Context) error {
-			_, _ = mt.Coll.Find(ctx, bson.D{})
-			return nil
-		})
-
-		evt := mt.GetStartedEvent()
-		assert.Equal(mt, "find", evt.CommandName, "expected command 'find', got '%v'", evt.CommandName)
-		checkOperationTime(mt, evt.Command, false)
-	})
-	mt.Run("clusterTime not included", func(mt *mtest.T) {
-		// $clusterTime should not be included in commands if the deployment does not support cluster times
-
-		_ = mt.Coll.FindOne(context.Background(), bson.D{})
-		evt := mt.GetStartedEvent()
-		assert.Equal(mt, "find", evt.CommandName, "expected command 'find', got '%v'", evt.CommandName)
-		_, err := evt.Command.LookupErr("$clusterTime")
-		assert.NotNil(mt, err, "expected $clusterTime to not be sent, but was")
-	})
-}
-
 func checkOperationTime(mt *mtest.T, cmd bson.Raw, shouldInclude bool) {
 	mt.Helper()
 
